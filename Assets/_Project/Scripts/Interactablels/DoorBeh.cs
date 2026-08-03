@@ -1,3 +1,4 @@
+using System;
 using DG.Tweening;
 using UnityEngine;
 
@@ -11,29 +12,64 @@ public sealed class DoorBeh : MonoBehaviour, IInteractable
     [SerializeField, Min(0f)] private float angleTolerance = 1f;
 
     private Tween rotationTween;
+    private DoorMotion currentMotion;
+    private bool isOpen;
 
     private float TargetOpenAngle =>
         openInNegativeDirection ? -OpenAngle : OpenAngle;
 
+    public bool IsOpen => isOpen;
+    public bool IsMoving =>
+        rotationTween != null && rotationTween.IsActive();
+
+    public event Action Opened;
+
+    private enum DoorMotion
+    {
+        None,
+        Opening,
+        Closing
+    }
+
+    private void Awake()
+    {
+        isOpen = IsAtAngle(TargetOpenAngle);
+    }
+
     public void CloseDoor()
     {
-        if (IsAtAngle(ClosedAngle))
+        if (IsMoving && currentMotion == DoorMotion.Closing)
+        {
             return;
+        }
 
-        RotateDoor(ClosedAngle);
+        if (!IsMoving && !isOpen && IsAtAngle(ClosedAngle))
+        {
+            return;
+        }
+
+        RotateDoor(ClosedAngle, DoorMotion.Closing);
     }
 
     public void OpenDoor()
     {
-        if (IsAtAngle(TargetOpenAngle))
+        if (IsMoving && currentMotion == DoorMotion.Opening)
+        {
             return;
+        }
 
-        RotateDoor(TargetOpenAngle);
+        if (!IsMoving && isOpen)
+        {
+            return;
+        }
+
+        RotateDoor(TargetOpenAngle, DoorMotion.Opening);
     }
 
     public void ToggleDoor()
     {
-        if (IsDoorOpen())
+        if (currentMotion == DoorMotion.Opening ||
+            !IsMoving && isOpen)
         {
             CloseDoor();
         }
@@ -43,30 +79,45 @@ public sealed class DoorBeh : MonoBehaviour, IInteractable
         }
     }
 
-    private void RotateDoor(float targetAngle)
+    private void RotateDoor(float targetAngle, DoorMotion motion)
     {
-        rotationTween?.Kill();
+        CancelRotationTween();
+        currentMotion = motion;
 
         Vector3 targetRotation = transform.localEulerAngles;
         targetRotation.y = targetAngle;
 
+        if (rotationDuration <= 0f)
+        {
+            transform.localEulerAngles = targetRotation;
+            CompleteRotation(motion);
+            return;
+        }
+
         rotationTween = transform
             .DOLocalRotate(targetRotation, rotationDuration, RotateMode.Fast)
             .SetEase(Ease.InOutSine)
-            .OnComplete(() => rotationTween = null);
+            .OnComplete(() => CompleteRotation(motion));
     }
 
-    private bool IsDoorOpen()
+    private void CompleteRotation(DoorMotion completedMotion)
     {
-        float currentAngle = GetCurrentYAngle();
+        if (currentMotion != completedMotion)
+        {
+            return;
+        }
 
-        float distanceToClosed = Mathf.Abs(
-            Mathf.DeltaAngle(currentAngle, ClosedAngle));
+        rotationTween = null;
+        currentMotion = DoorMotion.None;
 
-        float distanceToOpen = Mathf.Abs(
-            Mathf.DeltaAngle(currentAngle, TargetOpenAngle));
+        if (completedMotion == DoorMotion.Opening)
+        {
+            isOpen = true;
+            Opened?.Invoke();
+            return;
+        }
 
-        return distanceToOpen < distanceToClosed;
+        isOpen = false;
     }
 
     private bool IsAtAngle(float targetAngle)
@@ -82,9 +133,20 @@ public sealed class DoorBeh : MonoBehaviour, IInteractable
         return transform.localEulerAngles.y;
     }
 
+    private void CancelRotationTween()
+    {
+        if (rotationTween == null)
+        {
+            return;
+        }
+
+        rotationTween.Kill();
+        rotationTween = null;
+    }
+
     private void OnDestroy()
     {
-        rotationTween?.Kill();
+        CancelRotationTween();
     }
 
     public void Interact()

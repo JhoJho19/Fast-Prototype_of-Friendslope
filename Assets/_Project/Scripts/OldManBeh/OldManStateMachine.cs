@@ -1,12 +1,7 @@
-using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-[DisallowMultipleComponent]
-[RequireComponent(typeof(Animator))]
-[RequireComponent(typeof(NavMeshAgent))]
-public sealed class OldManStateMachine : MonoBehaviour
+public class OldManStateMachine : MonoBehaviour
 {
     public enum OldManState
     {
@@ -20,22 +15,16 @@ public sealed class OldManStateMachine : MonoBehaviour
     private const string PatrolTrigger = "Patrol";
     private const string AimTrigger = "Aim";
     private const string ShootTrigger = "Shoot";
-    private const float DoorCheckInterval = 0.1f;
-    private const float DoorCheckDistance = 2f;
-    private const float DoorOpenCooldown = 1f;
     private const float PatrolPointWaitDuration = 2f;
     private const float ArrivalDistanceTolerance = 0.05f;
     private const float NavMeshSnapDistance = 0.75f;
 
     [SerializeField] private Transform[] patrolPoints;
 
-    private readonly Dictionary<DoorBeh, float> doorOpenTimes = new();
-
     private NavMeshAgent agent;
     private Animator animator;
     private OldManState currentState;
     private int currentPatrolPointIndex = -1;
-    private float nextDoorCheckTime;
     private float patrolWaitEndTime;
     private bool isWaitingAtPatrolPoint;
     private bool missingPatrolPointsWarningShown;
@@ -141,22 +130,14 @@ public sealed class OldManStateMachine : MonoBehaviour
         if (HasReachedPatrolDestination())
         {
             StartPatrolPointWait();
-            return;
         }
-
-        if (Time.time < nextDoorCheckTime)
-        {
-            return;
-        }
-
-        nextDoorCheckTime = Time.time + DoorCheckInterval;
-        TryOpenDoorOnCurrentPath();
     }
 
     private bool HasReachedPatrolDestination()
     {
         return agent.hasPath &&
-               agent.remainingDistance <= agent.stoppingDistance + ArrivalDistanceTolerance;
+               agent.remainingDistance <=
+               agent.stoppingDistance + ArrivalDistanceTolerance;
     }
 
     private void StartPatrolPointWait()
@@ -171,6 +152,7 @@ public sealed class OldManStateMachine : MonoBehaviour
     private void SelectNextPatrolPoint()
     {
         int validPatrolPointCount = CountValidPatrolPoints();
+
         if (validPatrolPointCount == 0)
         {
             WarnAboutMissingPatrolPoints();
@@ -179,16 +161,20 @@ public sealed class OldManStateMachine : MonoBehaviour
         }
 
         int nextPatrolPointIndex;
+
         do
         {
-            nextPatrolPointIndex = UnityEngine.Random.Range(0, patrolPoints.Length);
+            nextPatrolPointIndex =
+                Random.Range(0, patrolPoints.Length);
         }
         while (patrolPoints[nextPatrolPointIndex] == null ||
-               validPatrolPointCount > 1 && nextPatrolPointIndex == currentPatrolPointIndex);
+               validPatrolPointCount > 1 &&
+               nextPatrolPointIndex == currentPatrolPointIndex);
 
         currentPatrolPointIndex = nextPatrolPointIndex;
         agent.isStopped = false;
-        agent.SetDestination(patrolPoints[currentPatrolPointIndex].position);
+        agent.SetDestination(
+            patrolPoints[currentPatrolPointIndex].position);
     }
 
     private int CountValidPatrolPoints()
@@ -199,6 +185,7 @@ public sealed class OldManStateMachine : MonoBehaviour
         }
 
         int validPatrolPointCount = 0;
+
         foreach (Transform patrolPoint in patrolPoints)
         {
             if (patrolPoint != null)
@@ -210,59 +197,18 @@ public sealed class OldManStateMachine : MonoBehaviour
         return validPatrolPointCount;
     }
 
-    private void TryOpenDoorOnCurrentPath()
-    {
-        if (!agent.hasPath)
-        {
-            return;
-        }
-
-        Vector3 pathDirection = agent.steeringTarget - agent.nextPosition;
-        pathDirection.y = 0f;
-
-        if (pathDirection.sqrMagnitude <= Mathf.Epsilon)
-        {
-            return;
-        }
-
-        Vector3 checkOrigin = agent.nextPosition + Vector3.up * (agent.height * 0.5f);
-        if (!Physics.SphereCast(
-                checkOrigin,
-                agent.radius,
-                pathDirection.normalized,
-                out RaycastHit hit,
-                DoorCheckDistance,
-                Physics.DefaultRaycastLayers,
-                QueryTriggerInteraction.Ignore))
-        {
-            return;
-        }
-
-        DoorBeh door = hit.collider.GetComponentInParent<DoorBeh>();
-        if (door == null || door.gameObject.name.IndexOf("Door", StringComparison.Ordinal) < 0)
-        {
-            return;
-        }
-
-        if (doorOpenTimes.TryGetValue(door, out float lastOpenTime) &&
-            Time.time - lastOpenTime < DoorOpenCooldown)
-        {
-            return;
-        }
-
-        doorOpenTimes[door] = Time.time;
-        door.OpenDoor();
-    }
-
     private void UpdateAnimationState()
     {
-        bool isMovingAlongPath = currentState == OldManState.Patrol &&
-                                  !isWaitingAtPatrolPoint &&
-                                  !agent.isStopped &&
-                                  agent.hasPath &&
-                                  !agent.pathPending;
+        bool isMovingAlongPath =
+            currentState == OldManState.Patrol &&
+            !isWaitingAtPatrolPoint &&
+            !agent.isStopped &&
+            agent.hasPath &&
+            !agent.pathPending;
 
-        animator.SetFloat(SpeedParameter, isMovingAlongPath ? 1f : 0f);
+        animator.SetFloat(
+            SpeedParameter,
+            isMovingAlongPath ? 1f : 0f);
     }
 
     private void SynchronizeAgentWithRootMotion()
@@ -277,14 +223,19 @@ public sealed class OldManStateMachine : MonoBehaviour
             return;
         }
 
-        Vector3 pathDirection = agent.steeringTarget - transform.position;
+        Vector3 pathDirection =
+            agent.steeringTarget - transform.position;
+
         pathDirection.y = 0f;
+
         if (pathDirection.sqrMagnitude <= Mathf.Epsilon)
         {
             return;
         }
 
-        Quaternion targetRotation = Quaternion.LookRotation(pathDirection.normalized);
+        Quaternion targetRotation =
+            Quaternion.LookRotation(pathDirection.normalized);
+
         transform.rotation = Quaternion.RotateTowards(
             transform.rotation,
             targetRotation,
@@ -306,7 +257,10 @@ public sealed class OldManStateMachine : MonoBehaviour
             return;
         }
 
-        Debug.LogWarning("OldMan requires at least one patrol point.", this);
+        Debug.LogWarning(
+            "OldMan requires at least one patrol point.",
+            this);
+
         missingPatrolPointsWarningShown = true;
     }
 }
