@@ -22,7 +22,10 @@ public sealed class DoorBeh : MonoBehaviour, IInteractable
     public bool IsMoving =>
         rotationTween != null && rotationTween.IsActive();
 
+    public event Action OpeningStarted;
     public event Action Opened;
+    public event Action ClosingStarted;
+    public event Action Closed;
 
     private enum DoorMotion
     {
@@ -84,6 +87,15 @@ public sealed class DoorBeh : MonoBehaviour, IInteractable
         CancelRotationTween();
         currentMotion = motion;
 
+        if (motion == DoorMotion.Opening)
+        {
+            OpeningStarted?.Invoke();
+        }
+        else
+        {
+            ClosingStarted?.Invoke();
+        }
+
         Vector3 targetRotation = transform.localEulerAngles;
         targetRotation.y = targetAngle;
 
@@ -118,6 +130,7 @@ public sealed class DoorBeh : MonoBehaviour, IInteractable
         }
 
         isOpen = false;
+        Closed?.Invoke();
     }
 
     private bool IsAtAngle(float targetAngle)
