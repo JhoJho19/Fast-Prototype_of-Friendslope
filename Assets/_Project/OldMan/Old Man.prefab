@@ -2085,6 +2085,9 @@ GameObject:
   - component: {fileID: 5376580524997341275}
   - component: {fileID: 7208634922264142163}
   - component: {fileID: 9157842327461937}
+  - component: {fileID: 4029608365614726409}
+  - component: {fileID: 3303203631609295081}
+  - component: {fileID: 266103392981462522}
   m_Layer: 0
   m_Name: Old Man
   m_TagString: Untagged
@@ -2165,11 +2168,46 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5561f5a449626c3488ab457332519cb9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::OldManStateMachine
-  patrolPoints:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+--- !u!114 &4029608365614726409
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7727499875036149936}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f612b8e449c02d448cf0ee5a5fa16b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OldManMovement
+  arrivalDistanceTolerance: 0.05
+  navMeshSnapDistance: 0.75
+--- !u!114 &3303203631609295081
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7727499875036149936}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4cb5adf7c7654924c841653b881bfa2c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OldManPatrol
+  patrolPoints: []
+  patrolPointWaitDuration: 2
+--- !u!114 &266103392981462522
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7727499875036149936}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 706fbb50a09ecb945bc9c43e38ca93fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OldManAnimation
 --- !u!1 &7759347723665245922
 GameObject:
   m_ObjectHideFlags: 0

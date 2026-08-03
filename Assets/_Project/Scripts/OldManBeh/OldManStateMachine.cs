@@ -1,6 +1,8 @@
 using UnityEngine;
-using UnityEngine.AI;
 
+[RequireComponent(typeof(OldManMovement))]
+[RequireComponent(typeof(OldManPatrol))]
+[RequireComponent(typeof(OldManAnimation))]
 public class OldManStateMachine : MonoBehaviour
 {
     public enum OldManState
@@ -11,33 +13,19 @@ public class OldManStateMachine : MonoBehaviour
         Shooting
     }
 
-    private const string SpeedParameter = "Speed";
-    private const string PatrolTrigger = "Patrol";
-    private const string AimTrigger = "Aim";
-    private const string ShootTrigger = "Shoot";
-    private const float PatrolPointWaitDuration = 2f;
-    private const float ArrivalDistanceTolerance = 0.05f;
-    private const float NavMeshSnapDistance = 0.75f;
-
-    [SerializeField] private Transform[] patrolPoints;
-
-    private NavMeshAgent agent;
-    private Animator animator;
+    private OldManMovement movement;
+    private OldManPatrol patrol;
+    private OldManAnimation animationController;
     private OldManState currentState;
-    private int currentPatrolPointIndex = -1;
-    private float patrolWaitEndTime;
-    private bool isWaitingAtPatrolPoint;
-    private bool missingPatrolPointsWarningShown;
+    private bool isInitialized;
 
     public OldManState CurrentState => currentState;
 
     private void Awake()
     {
-        agent = GetComponent<NavMeshAgent>();
-        animator = GetComponent<Animator>();
-        agent.updatePosition = false;
-        agent.updateRotation = false;
-        animator.applyRootMotion = true;
+        movement = GetComponent<OldManMovement>();
+        patrol = GetComponent<OldManPatrol>();
+        animationController = GetComponent<OldManAnimation>();
     }
 
     private void Start()
@@ -47,220 +35,65 @@ public class OldManStateMachine : MonoBehaviour
 
     private void Update()
     {
-        SynchronizeAgentWithRootMotion();
-
         if (currentState == OldManState.Patrol)
         {
-            UpdatePatrol();
+            patrol.Tick();
         }
 
-        UpdateAnimationState();
-    }
+        bool isMovingAlongPatrolRoute =
+            currentState == OldManState.Patrol &&
+            !patrol.IsWaiting &&
+            movement.IsMoving;
 
-    private void OnAnimatorMove()
-    {
-        Vector3 rootMotionPosition = animator.rootPosition;
-
-        if (agent.isOnNavMesh &&
-            NavMesh.SamplePosition(
-                rootMotionPosition,
-                out NavMeshHit navMeshHit,
-                NavMeshSnapDistance,
-                agent.areaMask))
-        {
-            rootMotionPosition.y = navMeshHit.position.y;
-            agent.nextPosition = rootMotionPosition;
-        }
-
-        transform.position = rootMotionPosition;
+        animationController.SetMoving(isMovingAlongPatrolRoute);
     }
 
     public void SetState(OldManState newState)
     {
-        currentState = newState;
+        if (isInitialized)
+        {
+            ExitState(currentState);
+        }
 
-        switch (currentState)
+        currentState = newState;
+        isInitialized = true;
+
+        EnterState(currentState);
+    }
+
+    private void EnterState(OldManState state)
+    {
+        switch (state)
         {
             case OldManState.Patrol:
-                isWaitingAtPatrolPoint = false;
-                agent.isStopped = false;
-                animator.ResetTrigger(AimTrigger);
-                animator.ResetTrigger(ShootTrigger);
-                animator.SetTrigger(PatrolTrigger);
-                SelectNextPatrolPoint();
+                animationController.PlayPatrol();
+                patrol.Enter();
                 break;
 
             case OldManState.Chasing:
                 // Placeholder for target pursuit.
-                StopAgent();
+                movement.Stop();
                 break;
 
             case OldManState.Aiming:
                 // Placeholder for target selection and aiming logic.
-                StopAgent();
-                animator.SetTrigger(AimTrigger);
+                movement.Stop();
+                animationController.PlayAim();
                 break;
 
             case OldManState.Shooting:
                 // Placeholder for weapon and damage logic.
-                StopAgent();
-                animator.SetTrigger(ShootTrigger);
+                movement.Stop();
+                animationController.PlayShoot();
                 break;
         }
     }
 
-    private void UpdatePatrol()
+    private void ExitState(OldManState state)
     {
-        if (isWaitingAtPatrolPoint)
+        if (state == OldManState.Patrol)
         {
-            if (Time.time >= patrolWaitEndTime)
-            {
-                isWaitingAtPatrolPoint = false;
-                SelectNextPatrolPoint();
-            }
-
-            return;
+            patrol.Exit();
         }
-
-        if (agent.pathPending)
-        {
-            return;
-        }
-
-        if (HasReachedPatrolDestination())
-        {
-            StartPatrolPointWait();
-        }
-    }
-
-    private bool HasReachedPatrolDestination()
-    {
-        return agent.hasPath &&
-               agent.remainingDistance <=
-               agent.stoppingDistance + ArrivalDistanceTolerance;
-    }
-
-    private void StartPatrolPointWait()
-    {
-        isWaitingAtPatrolPoint = true;
-        patrolWaitEndTime = Time.time + PatrolPointWaitDuration;
-        agent.isStopped = true;
-        agent.ResetPath();
-        agent.nextPosition = transform.position;
-    }
-
-    private void SelectNextPatrolPoint()
-    {
-        int validPatrolPointCount = CountValidPatrolPoints();
-
-        if (validPatrolPointCount == 0)
-        {
-            WarnAboutMissingPatrolPoints();
-            StopAgent();
-            return;
-        }
-
-        int nextPatrolPointIndex;
-
-        do
-        {
-            nextPatrolPointIndex =
-                Random.Range(0, patrolPoints.Length);
-        }
-        while (patrolPoints[nextPatrolPointIndex] == null ||
-               validPatrolPointCount > 1 &&
-               nextPatrolPointIndex == currentPatrolPointIndex);
-
-        currentPatrolPointIndex = nextPatrolPointIndex;
-        agent.isStopped = false;
-        agent.SetDestination(
-            patrolPoints[currentPatrolPointIndex].position);
-    }
-
-    private int CountValidPatrolPoints()
-    {
-        if (patrolPoints == null)
-        {
-            return 0;
-        }
-
-        int validPatrolPointCount = 0;
-
-        foreach (Transform patrolPoint in patrolPoints)
-        {
-            if (patrolPoint != null)
-            {
-                validPatrolPointCount++;
-            }
-        }
-
-        return validPatrolPointCount;
-    }
-
-    private void UpdateAnimationState()
-    {
-        bool isMovingAlongPath =
-            currentState == OldManState.Patrol &&
-            !isWaitingAtPatrolPoint &&
-            !agent.isStopped &&
-            agent.hasPath &&
-            !agent.pathPending;
-
-        animator.SetFloat(
-            SpeedParameter,
-            isMovingAlongPath ? 1f : 0f);
-    }
-
-    private void SynchronizeAgentWithRootMotion()
-    {
-        if (!agent.isOnNavMesh)
-        {
-            return;
-        }
-
-        if (agent.isStopped || !agent.hasPath || agent.pathPending)
-        {
-            return;
-        }
-
-        Vector3 pathDirection =
-            agent.steeringTarget - transform.position;
-
-        pathDirection.y = 0f;
-
-        if (pathDirection.sqrMagnitude <= Mathf.Epsilon)
-        {
-            return;
-        }
-
-        Quaternion targetRotation =
-            Quaternion.LookRotation(pathDirection.normalized);
-
-        transform.rotation = Quaternion.RotateTowards(
-            transform.rotation,
-            targetRotation,
-            agent.angularSpeed * Time.deltaTime);
-    }
-
-    private void StopAgent()
-    {
-        isWaitingAtPatrolPoint = false;
-        agent.isStopped = true;
-        agent.ResetPath();
-        agent.nextPosition = transform.position;
-    }
-
-    private void WarnAboutMissingPatrolPoints()
-    {
-        if (missingPatrolPointsWarningShown)
-        {
-            return;
-        }
-
-        Debug.LogWarning(
-            "OldMan requires at least one patrol point.",
-            this);
-
-        missingPatrolPointsWarningShown = true;
     }
 }
