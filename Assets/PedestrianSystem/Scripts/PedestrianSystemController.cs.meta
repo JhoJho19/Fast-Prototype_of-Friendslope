@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 919ebc1bfba99c3418e6a07db57dc2c2
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 314767
+  packageName: Pedestrian Navigation System
+  packageVersion: 1.0.0
+  assetPath: Assets/PedestrianSystem/Scripts/PedestrianSystemController.cs
+  uploadId: 744544

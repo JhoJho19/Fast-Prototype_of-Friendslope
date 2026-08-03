@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: cbc7ddcf4ec81c4418d67bedc7de5d6d
+PrefabImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 314767
+  packageName: Pedestrian Navigation System
+  packageVersion: 1.0.0
+  assetPath: Assets/PedestrianSystem/Prefabs/Pedestrian.prefab
+  uploadId: 744544
