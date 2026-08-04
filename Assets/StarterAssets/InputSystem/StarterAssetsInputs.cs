@@ -47,7 +47,7 @@ namespace StarterAssets
 
 		public void OnCrouch(InputValue value)
 		{
-			CrouchInput(value.isPressed);
+			crouch = false;
 		}
 #endif
 
@@ -74,7 +74,7 @@ namespace StarterAssets
 
 		public void CrouchInput(bool newCrouchState)
 		{
-			crouch = newCrouchState;
+			crouch = false;
 		}
 		
 		private void OnApplicationFocus(bool hasFocus)
