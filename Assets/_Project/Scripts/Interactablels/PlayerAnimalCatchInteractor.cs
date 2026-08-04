@@ -10,12 +10,18 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
     private const string DogPointName = "DogPoint";
     private const string CatPointName = "CatPoint";
     private const string ParrotPointName = "ParrotPoint";
+    private const string DogVisualName = "DogVisual";
+    private const string CatVisualName = "CatVisual";
+    private const string ParotVisualName = "ParotVisual";
 
     [SerializeField] private string catchHint = "Hold left button to catch";
     [SerializeField] private int hintPriority = 10;
     [SerializeField] private Transform dogPoint;
     [SerializeField] private Transform catPoint;
     [SerializeField] private Transform parrotPoint;
+    [SerializeField] private GameObject dogVisual;
+    [SerializeField] private GameObject catVisual;
+    [SerializeField] private GameObject parotVisual;
 
     private PlayerInteractor interactor;
     private PlayerInteractionHintPresenter hintPresenter;
@@ -29,22 +35,27 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
     {
         CacheReferences();
         FindCarryPoints();
+        FindCarryVisuals();
+        HideCarryVisuals();
     }
 
     private void Reset()
     {
         FindCarryPoints();
+        FindCarryVisuals();
     }
 
     private void OnValidate()
     {
         FindCarryPoints();
+        FindCarryVisuals();
     }
 
     private void OnEnable()
     {
         CacheReferences();
         SubscribeToAction();
+        HideCarryVisuals();
     }
 
     private void Update()
@@ -78,6 +89,7 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
             ReleaseCarriedAnimal();
         }
 
+        HideCarryVisuals();
         currentCatchable = null;
         UnsubscribeFromAction();
     }
@@ -138,6 +150,26 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
         if (parrotPoint == null)
         {
             parrotPoint = FindChildByName(root, ParrotPointName);
+        }
+    }
+
+    private void FindCarryVisuals()
+    {
+        Transform root = transform.root;
+
+        if (dogVisual == null)
+        {
+            dogVisual = FindChildByName(root, DogVisualName)?.gameObject;
+        }
+
+        if (catVisual == null)
+        {
+            catVisual = FindChildByName(root, CatVisualName)?.gameObject;
+        }
+
+        if (parotVisual == null)
+        {
+            parotVisual = FindChildByName(root, ParotVisualName)?.gameObject;
         }
     }
 
@@ -228,6 +260,7 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
 
         carriedAnimal = currentCatchable;
         currentCatchable = null;
+        ShowCarryVisual(carriedAnimal.Kind);
     }
 
     private void OnCatchCanceled(InputAction.CallbackContext context)
@@ -246,6 +279,8 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
         {
             return;
         }
+
+        HideCarryVisuals();
 
         Transform anchor =
             releaseAnchor != null
@@ -299,6 +334,48 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
                 return parrotPoint;
             default:
                 return dogPoint;
+        }
+    }
+
+    private void ShowCarryVisual(CatchableAnimalKind animalKind)
+    {
+        HideCarryVisuals();
+
+        GameObject visual = GetCarryVisual(animalKind);
+
+        if (visual != null &&
+            !visual.activeSelf)
+        {
+            visual.SetActive(true);
+        }
+    }
+
+    private void HideCarryVisuals()
+    {
+        SetVisualActive(dogVisual, false);
+        SetVisualActive(catVisual, false);
+        SetVisualActive(parotVisual, false);
+    }
+
+    private GameObject GetCarryVisual(CatchableAnimalKind animalKind)
+    {
+        switch (animalKind)
+        {
+            case CatchableAnimalKind.Cat:
+                return catVisual;
+            case CatchableAnimalKind.Parrot:
+                return parotVisual;
+            default:
+                return dogVisual;
+        }
+    }
+
+    private static void SetVisualActive(GameObject visual, bool active)
+    {
+        if (visual != null &&
+            visual.activeSelf != active)
+        {
+            visual.SetActive(active);
         }
     }
 }

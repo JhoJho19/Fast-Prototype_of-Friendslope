@@ -161,6 +161,50 @@ public sealed class AnimalMovement : MonoBehaviour
         ApplySpeedMultiplier();
     }
 
+    public void ResetNavMeshBinding()
+    {
+        hasRequestedRoute = false;
+        hasTriedInitialSnap = false;
+        warnedAboutMissingNavMesh = false;
+    }
+
+    public bool TrySnapToNavMesh(
+        Vector3 targetPosition,
+        float searchDistance)
+    {
+        ResetNavMeshBinding();
+
+        if (agent == null ||
+            !agent.isActiveAndEnabled)
+        {
+            return false;
+        }
+
+        NavMeshQueryFilter filter = new NavMeshQueryFilter
+        {
+            agentTypeID = agent.agentTypeID,
+            areaMask = agent.areaMask
+        };
+
+        float sampleDistance =
+            Mathf.Max(
+                navMeshSnapDistance,
+                searchDistance,
+                agent.baseOffset + navMeshSnapDistance);
+
+        if (!NavMesh.SamplePosition(
+                GetNavMeshSampleOrigin(targetPosition),
+                out NavMeshHit navMeshHit,
+                sampleDistance,
+                filter))
+        {
+            return false;
+        }
+
+        return agent.Warp(navMeshHit.position) &&
+               agent.isOnNavMesh;
+    }
+
     private bool EnsureOnNavMesh()
     {
         if (IsAgentOnNavMesh)
@@ -168,7 +212,7 @@ public sealed class AnimalMovement : MonoBehaviour
             return true;
         }
 
-        if (agent == null || !agent.isActiveAndEnabled || hasTriedInitialSnap)
+        if (agent == null || !agent.isActiveAndEnabled)
         {
             WarnAboutMissingNavMesh();
             return false;
@@ -183,9 +227,11 @@ public sealed class AnimalMovement : MonoBehaviour
         };
 
         if (NavMesh.SamplePosition(
-                transform.position,
+                GetNavMeshSampleOrigin(transform.position),
                 out NavMeshHit navMeshHit,
-                navMeshSnapDistance,
+                Mathf.Max(
+                    navMeshSnapDistance,
+                    agent.baseOffset + navMeshSnapDistance),
                 filter) &&
             agent.Warp(navMeshHit.position))
         {
@@ -217,5 +263,18 @@ public sealed class AnimalMovement : MonoBehaviour
         }
 
         agent.speed = defaultSpeed * speedMultiplier;
+    }
+
+    private Vector3 GetNavMeshSampleOrigin(Vector3 targetPosition)
+    {
+        if (agent == null)
+        {
+            return targetPosition;
+        }
+
+        float verticalOffset =
+            Mathf.Max(agent.baseOffset, agent.height * 0.5f);
+
+        return targetPosition + Vector3.up * verticalOffset;
     }
 }

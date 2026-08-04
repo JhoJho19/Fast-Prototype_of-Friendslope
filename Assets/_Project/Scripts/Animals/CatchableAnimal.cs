@@ -15,6 +15,7 @@ public sealed class CatchableAnimal : MonoBehaviour
     [SerializeField] private AnimalStateMachine stateMachine;
     [SerializeField] private NavMeshAgent agent;
     [SerializeField] private Collider[] catchColliders;
+    [SerializeField] private Renderer[] animalRenderers;
     [SerializeField, Min(0.1f)] private float releaseDistanceFromPlayer = 1.5f;
     [SerializeField, Min(0.1f)] private float releaseNavMeshSampleDistance = 2f;
 
@@ -35,6 +36,7 @@ public sealed class CatchableAnimal : MonoBehaviour
         FindReferences();
         GuessAnimalKind();
         CollectCatchColliders();
+        CollectAnimalRenderers();
     }
 
     private void OnValidate()
@@ -42,6 +44,7 @@ public sealed class CatchableAnimal : MonoBehaviour
         FindReferences();
         GuessAnimalKind();
         CollectCatchColliders();
+        CollectAnimalRenderers();
     }
 
     private void Awake()
@@ -53,6 +56,12 @@ public sealed class CatchableAnimal : MonoBehaviour
             catchColliders.Length == 0)
         {
             CollectCatchColliders();
+        }
+
+        if (animalRenderers == null ||
+            animalRenderers.Length == 0)
+        {
+            CollectAnimalRenderers();
         }
 
         originalParent = transform.parent;
@@ -78,9 +87,15 @@ public sealed class CatchableAnimal : MonoBehaviour
             agent.enabled = false;
         }
 
+        if (stateMachine != null)
+        {
+            stateMachine.Movement.ResetNavMeshBinding();
+        }
+
         transform.SetParent(carryPoint, true);
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.identity;
+        SetAnimalRenderersEnabled(false);
 
         isCarried = true;
         return true;
@@ -107,14 +122,34 @@ public sealed class CatchableAnimal : MonoBehaviour
             agent.enabled = true;
         }
 
+        if (stateMachine != null)
+        {
+            stateMachine.Movement.ResetNavMeshBinding();
+        }
+
+        if (stateMachine != null &&
+            stateMachine.Movement.TrySnapToNavMesh(
+                releasePosition,
+                releaseNavMeshSampleDistance +
+                (agent != null ? agent.baseOffset : 0f) +
+                1f))
+        {
+            releasePosition = transform.position;
+        }
+        else if (agent != null &&
+                 agent.isActiveAndEnabled)
+        {
+            agent.Warp(releasePosition);
+        }
+
         if (agent != null &&
             agent.isActiveAndEnabled)
         {
-            agent.Warp(releasePosition);
-            agent.nextPosition = releasePosition;
+            agent.nextPosition = transform.position;
         }
 
         SetCatchCollidersEnabled(true);
+        SetAnimalRenderersEnabled(true);
 
         isCarried = false;
 
@@ -181,6 +216,11 @@ public sealed class CatchableAnimal : MonoBehaviour
     private void CollectCatchColliders()
     {
         catchColliders = GetComponentsInChildren<Collider>(true);
+    }
+
+    private void CollectAnimalRenderers()
+    {
+        animalRenderers = GetComponentsInChildren<Renderer>(true);
     }
 
     private Vector3 ResolveReleasePosition(
@@ -267,6 +307,22 @@ public sealed class CatchableAnimal : MonoBehaviour
             if (catchCollider != null)
             {
                 catchCollider.enabled = enabled;
+            }
+        }
+    }
+
+    private void SetAnimalRenderersEnabled(bool enabled)
+    {
+        if (animalRenderers == null)
+        {
+            return;
+        }
+
+        foreach (Renderer animalRenderer in animalRenderers)
+        {
+            if (animalRenderer != null)
+            {
+                animalRenderer.enabled = enabled;
             }
         }
     }
