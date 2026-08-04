@@ -51,6 +51,30 @@ namespace StarterAssets
 		[Tooltip("How far in degrees can you move the camera down")]
 		public float BottomClamp = -90.0f;
 
+		[Header("Crouch")]
+		[SerializeField]
+		[Tooltip("Move speed of the character while crouching")]
+		private float CrouchSpeed = 2.0f;
+		[SerializeField]
+		[Tooltip("CharacterController height while crouching")]
+		private float CrouchHeight = 1.25f;
+		[SerializeField]
+		[Tooltip("How quickly crouch transitions are applied")]
+		private float CrouchTransitionSpeed = 10.0f;
+		[SerializeField]
+		[Tooltip("How far to lower the camera target while crouching")]
+		private float CrouchCameraOffset = 0.5f;
+		[SerializeField]
+		[Tooltip("Layers checked before standing up")]
+		private LayerMask CeilingLayers = ~0;
+		[SerializeField]
+		[Tooltip("Extra headroom required to stand up")]
+		private float CeilingCheckBuffer = 0.05f;
+
+		[Header("Animation")]
+		[SerializeField]
+		private Animator _animator;
+
 		// cinemachine
 		private float _cinemachineTargetPitch;
 
@@ -63,6 +87,12 @@ namespace StarterAssets
 		// timeout deltatime
 		private float _jumpTimeoutDelta;
 		private float _fallTimeoutDelta;
+		private bool _isCrouching;
+		private float _standingHeight;
+		private float _standingBottom;
+		private Vector3 _standingCenter;
+		private Vector3 _standingCameraTargetLocalPosition;
+		private Vector3 _crouchingCameraTargetLocalPosition;
 
 	
 #if ENABLE_INPUT_SYSTEM
@@ -73,6 +103,10 @@ namespace StarterAssets
 		private GameObject _mainCamera;
 
 		private const float _threshold = 0.01f;
+		private static readonly int _animIDSpeed = Animator.StringToHash("Speed");
+		private static readonly int _animIDIsGrounded = Animator.StringToHash("IsGrounded");
+		private static readonly int _animIDIsCrouching = Animator.StringToHash("IsCrouching");
+		private static readonly int _animIDMotionSpeed = Animator.StringToHash("MotionSpeed");
 
 		private bool IsCurrentDeviceMouse
 		{
@@ -104,6 +138,25 @@ namespace StarterAssets
 #else
 			Debug.LogError( "Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
 #endif
+			if (_animator == null)
+			{
+				_animator = GetComponentInChildren<Animator>(true);
+			}
+
+			_standingHeight = _controller.height;
+			_standingCenter = _controller.center;
+			_standingBottom = _standingCenter.y - (_standingHeight * 0.5f);
+
+			if (CinemachineCameraTarget != null)
+			{
+				_standingCameraTargetLocalPosition = CinemachineCameraTarget.transform.localPosition;
+				_crouchingCameraTargetLocalPosition = _standingCameraTargetLocalPosition - new Vector3(0.0f, CrouchCameraOffset, 0.0f);
+			}
+
+			if (CeilingLayers.value == 0)
+			{
+				CeilingLayers = ~0;
+			}
 
 			// reset our timeouts on start
 			_jumpTimeoutDelta = JumpTimeout;
@@ -112,9 +165,11 @@ namespace StarterAssets
 
 		private void Update()
 		{
-			JumpAndGravity();
 			GroundedCheck();
+			HandleCrouch();
+			JumpAndGravity();
 			Move();
+			UpdateAnimator();
 		}
 
 		private void LateUpdate()
@@ -154,7 +209,7 @@ namespace StarterAssets
 		private void Move()
 		{
 			// set target speed based on move speed, sprint speed and if sprint is pressed
-			float targetSpeed = _input.sprint ? SprintSpeed : MoveSpeed;
+			float targetSpeed = _isCrouching ? CrouchSpeed : (_input.sprint ? SprintSpeed : MoveSpeed);
 
 			// a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
 
@@ -196,6 +251,65 @@ namespace StarterAssets
 
 			// move the player
 			_controller.Move(inputDirection.normalized * (_speed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+		}
+
+		private void HandleCrouch()
+		{
+			UpdateCrouchState();
+			ApplyCrouchTransition();
+		}
+
+		private void UpdateCrouchState()
+		{
+			if (_input.crouch)
+			{
+				_isCrouching = true;
+				return;
+			}
+
+			if (_isCrouching && CanStandUp())
+			{
+				_isCrouching = false;
+			}
+		}
+
+		private void ApplyCrouchTransition()
+		{
+			float targetHeight = _isCrouching ? CrouchHeight : _standingHeight;
+			float nextHeight = Mathf.MoveTowards(_controller.height, targetHeight, CrouchTransitionSpeed * Time.deltaTime);
+			_controller.height = nextHeight;
+			_controller.center = GetCenterForHeight(nextHeight);
+
+			if (CinemachineCameraTarget != null)
+			{
+				Vector3 targetCameraPosition = _isCrouching ? _crouchingCameraTargetLocalPosition : _standingCameraTargetLocalPosition;
+				CinemachineCameraTarget.transform.localPosition = Vector3.MoveTowards(
+					CinemachineCameraTarget.transform.localPosition,
+					targetCameraPosition,
+					CrouchTransitionSpeed * Time.deltaTime);
+			}
+		}
+
+		private Vector3 GetCenterForHeight(float height)
+		{
+			return new Vector3(_standingCenter.x, _standingBottom + (height * 0.5f), _standingCenter.z);
+		}
+
+		private bool CanStandUp()
+		{
+			float radius = Mathf.Max(
+				0.01f,
+				(_controller.radius - _controller.skinWidth) *
+				Mathf.Max(Mathf.Abs(transform.lossyScale.x), Mathf.Abs(transform.lossyScale.z)));
+			float halfHeight = Mathf.Max((_standingHeight * 0.5f) - _controller.radius + CeilingCheckBuffer, 0.0f);
+			Vector3 bottom = transform.TransformPoint(_standingCenter + (Vector3.down * halfHeight));
+			Vector3 top = transform.TransformPoint(_standingCenter + (Vector3.up * halfHeight));
+			return !Physics.CheckCapsule(bottom, top, radius, GetCeilingLayerMask(), QueryTriggerInteraction.Ignore);
+		}
+
+		private int GetCeilingLayerMask()
+		{
+			return CeilingLayers.value & ~(1 << gameObject.layer);
 		}
 
 		private void JumpAndGravity()
@@ -244,6 +358,32 @@ namespace StarterAssets
 			{
 				_verticalVelocity += Gravity * Time.deltaTime;
 			}
+		}
+
+		private void UpdateAnimator()
+		{
+			if (_animator == null)
+			{
+				return;
+			}
+
+			float horizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
+			float normalizedSpeed = SprintSpeed > 0.0f ? Mathf.Clamp01(horizontalSpeed / SprintSpeed) : 0.0f;
+			float motionSpeed = 0.0f;
+
+			if (!Grounded)
+			{
+				motionSpeed = Mathf.Max(1.0f, MoveSpeed > 0.0f ? horizontalSpeed / MoveSpeed : 1.0f);
+			}
+			else if (horizontalSpeed > _threshold)
+			{
+				motionSpeed = MoveSpeed > 0.0f ? horizontalSpeed / MoveSpeed : 1.0f;
+			}
+
+			_animator.SetFloat(_animIDSpeed, normalizedSpeed);
+			_animator.SetBool(_animIDIsGrounded, Grounded);
+			_animator.SetBool(_animIDIsCrouching, _isCrouching);
+			_animator.SetFloat(_animIDMotionSpeed, motionSpeed);
 		}
 
 		private static float ClampAngle(float lfAngle, float lfMin, float lfMax)
