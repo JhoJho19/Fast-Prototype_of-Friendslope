@@ -9,6 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1803359849377911781}
+  - component: {fileID: 6715282201399550215}
+  - component: {fileID: 8444219570876539754}
   m_Layer: 0
   m_Name: Parot
   m_TagString: Untagged
@@ -32,6 +34,48 @@ Transform:
   - {fileID: 8513925840038932613}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!136 &6715282201399550215
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3525216744750794722}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.2
+  m_Height: 1.2
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.9, z: 0}
+--- !u!114 &8444219570876539754
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3525216744750794722}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3d9558fff019b645a48b7d121c07070, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CatchableAnimal
+  animalKind: 2
+  stateMachine: {fileID: 0}
+  agent: {fileID: 0}
+  catchColliders:
+  - {fileID: 6715282201399550215}
+  releaseDistanceFromPlayer: 1.5
+  releaseNavMeshSampleDistance: 2
 --- !u!1001 &8191259424513808238
 PrefabInstance:
   m_ObjectHideFlags: 0

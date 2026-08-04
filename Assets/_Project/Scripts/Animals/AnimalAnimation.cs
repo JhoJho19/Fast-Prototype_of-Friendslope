@@ -10,7 +10,6 @@ public sealed class AnimalAnimation : MonoBehaviour
     [SerializeField] private string locomotionParameter = "Vert";
     [SerializeField] private string idleParameter = "Idle";
     [SerializeField] private string fleeParameter = "Flee";
-    [SerializeField] private string paralyzedParameter = "Paralyzed";
     [SerializeField, Min(0f)] private float movementSpeedThreshold = 0.01f;
     [SerializeField] private float idleLocomotionValue;
     [SerializeField] private float movingLocomotionValue = 1f;
@@ -42,25 +41,25 @@ public sealed class AnimalAnimation : MonoBehaviour
     {
         SetOptionalState(idleParameter, false);
         SetOptionalState(fleeParameter, false);
-        SetOptionalState(paralyzedParameter, false);
     }
 
     public void PlayIdle()
     {
         SetMoving(false, 0f);
+        SetOptionalState(fleeParameter, false);
         SetOptionalState(idleParameter, true);
     }
 
     public void PlayFlee(bool active)
     {
         SetMoving(false, 0f);
+        SetOptionalState(idleParameter, false);
         SetOptionalState(fleeParameter, active);
     }
 
-    public void PlayParalyzed(bool active)
+    public void PlayCarried()
     {
-        SetMoving(false, 0f);
-        SetOptionalState(paralyzedParameter, active);
+        PlayIdle();
     }
 
     public void SetMoving(bool isMoving, float currentSpeed)

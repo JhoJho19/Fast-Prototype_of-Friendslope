@@ -9,6 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1594565240421209071}
+  - component: {fileID: 8936020433093733693}
+  - component: {fileID: 7915816054563843218}
   m_Layer: 0
   m_Name: Cat
   m_TagString: Untagged
@@ -32,6 +34,48 @@ Transform:
   - {fileID: 9014597525547927383}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!136 &8936020433093733693
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6471483197532988382}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.16
+  m_Height: 0.72
+  m_Direction: 2
+  m_Center: {x: 0, y: 0.18, z: 0.05}
+--- !u!114 &7915816054563843218
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6471483197532988382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3d9558fff019b645a48b7d121c07070, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CatchableAnimal
+  animalKind: 1
+  stateMachine: {fileID: 0}
+  agent: {fileID: 0}
+  catchColliders:
+  - {fileID: 8936020433093733693}
+  releaseDistanceFromPlayer: 1.5
+  releaseNavMeshSampleDistance: 2
 --- !u!1001 &8831824733551665340
 PrefabInstance:
   m_ObjectHideFlags: 0

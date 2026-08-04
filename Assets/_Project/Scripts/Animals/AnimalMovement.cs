@@ -13,10 +13,10 @@ public sealed class AnimalMovement : MonoBehaviour
     private NavMeshPath calculatedPath;
     private Vector3 currentDestination;
     private float defaultSpeed;
+    private float speedMultiplier = 1f;
     private bool hasRequestedRoute;
     private bool hasTriedInitialSnap;
     private bool warnedAboutMissingNavMesh;
-    private bool isParalyzed;
 
     public bool IsMoving =>
         IsAgentOnNavMesh &&
@@ -75,11 +75,13 @@ public sealed class AnimalMovement : MonoBehaviour
         defaultSpeed = agent.speed;
         agent.updatePosition = true;
         agent.updateRotation = true;
+        ApplySpeedMultiplier();
     }
 
     private void OnEnable()
     {
         hasTriedInitialSnap = false;
+        ApplySpeedMultiplier();
     }
 
     private void OnDisable()
@@ -89,7 +91,7 @@ public sealed class AnimalMovement : MonoBehaviour
 
     public bool TryMoveTo(Vector3 destination)
     {
-        if (isParalyzed || !EnsureOnNavMesh())
+        if (!EnsureOnNavMesh())
         {
             return false;
         }
@@ -113,7 +115,7 @@ public sealed class AnimalMovement : MonoBehaviour
 
     public bool CanReach(Vector3 destination)
     {
-        if (isParalyzed || !EnsureOnNavMesh())
+        if (!EnsureOnNavMesh())
         {
             return false;
         }
@@ -133,7 +135,7 @@ public sealed class AnimalMovement : MonoBehaviour
 
     public void Resume()
     {
-        if (IsAgentOnNavMesh && agent.hasPath && !isParalyzed)
+        if (IsAgentOnNavMesh && agent.hasPath)
         {
             agent.isStopped = false;
         }
@@ -153,24 +155,10 @@ public sealed class AnimalMovement : MonoBehaviour
         agent.nextPosition = transform.position;
     }
 
-    public void SetParalyzed(bool value)
+    public void SetSpeedMultiplier(float multiplier)
     {
-        if (agent == null || isParalyzed == value)
-        {
-            return;
-        }
-
-        isParalyzed = value;
-
-        if (value)
-        {
-            defaultSpeed = agent.speed;
-            agent.speed = 0f;
-            Stop();
-            return;
-        }
-
-        agent.speed = defaultSpeed;
+        speedMultiplier = Mathf.Max(0.01f, multiplier);
+        ApplySpeedMultiplier();
     }
 
     private bool EnsureOnNavMesh()
@@ -219,5 +207,15 @@ public sealed class AnimalMovement : MonoBehaviour
         Debug.LogWarning(
             $"{name} cannot start animal navigation because no matching NavMesh was found nearby.",
             this);
+    }
+
+    private void ApplySpeedMultiplier()
+    {
+        if (agent == null)
+        {
+            return;
+        }
+
+        agent.speed = defaultSpeed * speedMultiplier;
     }
 }

@@ -1,17 +1,10 @@
-using Cysharp.Threading.Tasks;
-using System;
 using System.Collections.Generic;
-using System.Threading;
-using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Collider))]
 public sealed class PlayerInteractor : MonoBehaviour
 {
     private const string InteractTag = "Interact";
-    private const string InteractActionName = "Interact";
 
     [Header("Interaction")]
     [SerializeField, Min(0.1f)]
@@ -26,17 +19,15 @@ public sealed class PlayerInteractor : MonoBehaviour
     private readonly List<Collider> trackedColliders = new();
 
     private Camera interactionCamera;
-    private PlayerInput playerInput;
-    private TMP_Text textHint;
-    private InputAction interactAction;
     private Transform currentTarget;
 
-    private CancellationTokenSource trackingCancellation;
+    public Transform CurrentTarget => currentTarget;
+    public Camera InteractionCamera => interactionCamera;
+    public Transform PlayerRoot => transform.root;
 
     private void Awake()
     {
         CacheReferences();
-        HideHint();
     }
 
     private void Reset()
@@ -47,47 +38,41 @@ public sealed class PlayerInteractor : MonoBehaviour
     private void OnValidate()
     {
         EnsureTriggerCollider();
-
-        interactionRayDistance =
-            Mathf.Max(0.1f, interactionRayDistance);
+        interactionRayDistance = Mathf.Max(0.1f, interactionRayDistance);
     }
 
     private void OnEnable()
     {
         CacheReferences();
-        SubscribeToInteractAction();
-        HideHint();
+        currentTarget = null;
+    }
+
+    private void Update()
+    {
+        if (interactionCamera == null)
+        {
+            CacheReferences();
+        }
 
         PruneTrackedColliders();
-
-        if (trackedColliders.Count > 0)
-        {
-            StartTracking();
-        }
+        currentTarget = FindCurrentTarget();
     }
 
     private void OnDisable()
     {
-        StopTracking();
-        UnsubscribeFromInteractAction();
-
+        trackedColliders.Clear();
         currentTarget = null;
-        HideHint();
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (!IsValidInteractCollider(other))
+        if (!IsValidInteractionCollider(other) ||
+            trackedColliders.Contains(other))
         {
             return;
         }
 
-        if (!trackedColliders.Contains(other))
-        {
-            trackedColliders.Add(other);
-        }
-
-        StartTracking();
+        trackedColliders.Add(other);
     }
 
     private void OnTriggerExit(Collider other)
@@ -99,151 +84,40 @@ public sealed class PlayerInteractor : MonoBehaviour
 
         trackedColliders.Remove(other);
 
-        if (currentTarget != null)
-        {
-            Transform interactTransform =
-                ResolveInteractTransform(other.transform);
-
-            if (interactTransform == currentTarget &&
-                !IsTracked(interactTransform))
-            {
-                currentTarget = null;
-                HideHint();
-            }
-        }
-
-        if (trackedColliders.Count == 0)
-        {
-            StopTracking();
-        }
-    }
-
-    private void StartTracking()
-    {
-        if (!isActiveAndEnabled)
+        if (currentTarget == null)
         {
             return;
         }
 
-        if (trackedColliders.Count == 0)
+        Transform interactionTransform =
+            ResolveInteractionTransform(other.transform);
+
+        if (interactionTransform == currentTarget &&
+            !IsTracked(interactionTransform))
         {
-            return;
-        }
-
-        if (trackingCancellation != null)
-        {
-            return;
-        }
-
-        trackingCancellation =
-            CancellationTokenSource.CreateLinkedTokenSource(
-                this.GetCancellationTokenOnDestroy());
-
-        TrackTargetsAsync(trackingCancellation).Forget();
-    }
-
-    private void StopTracking()
-    {
-        CancellationTokenSource cancellation =
-            trackingCancellation;
-
-        trackingCancellation = null;
-
-        if (cancellation != null)
-        {
-            cancellation.Cancel();
-            cancellation.Dispose();
-        }
-
-        currentTarget = null;
-        HideHint();
-    }
-
-    private async UniTask TrackTargetsAsync(
-        CancellationTokenSource cancellationSource)
-    {
-        CancellationToken cancellationToken =
-            cancellationSource.Token;
-
-        try
-        {
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                RefreshReferences();
-                PruneTrackedColliders();
-
-                if (trackedColliders.Count == 0)
-                {
-                    break;
-                }
-
-                currentTarget = FindCurrentTarget();
-
-                SetHintVisible(currentTarget != null);
-
-                await UniTask.Yield(
-                    PlayerLoopTiming.Update,
-                    cancellationToken);
-            }
-        }
-        catch (OperationCanceledException)
-        {
-
-        }
-        finally
-        {
-            if (ReferenceEquals(
-                    trackingCancellation,
-                    cancellationSource))
-            {
-                trackingCancellation = null;
-                cancellationSource.Dispose();
-
-                currentTarget = null;
-                HideHint();
-            }
+            currentTarget = null;
         }
     }
 
-    private void RefreshReferences()
+    public bool TryGetTargetComponent<T>(out T component)
+        where T : class
     {
-        if (interactionCamera == null ||
-            playerInput == null ||
-            textHint == null)
-        {
-            CacheReferences();
-        }
-
-        if (interactAction == null)
-        {
-            SubscribeToInteractAction();
-        }
+        component = FindComponentInHierarchy<T>(currentTarget);
+        return component != null;
     }
 
     private void CacheReferences()
     {
-        if (playerInput == null)
-        {
-            playerInput = GetComponentInParent<PlayerInput>();
-        }
-
         if (interactionCamera == null)
         {
             interactionCamera = FindInteractionCamera();
-        }
-
-        if (textHint == null)
-        {
-            textHint = FindTextHint();
         }
     }
 
     private Camera FindInteractionCamera()
     {
         Transform root = transform.root;
-
-        Camera[] cameras =
-            root.GetComponentsInChildren<Camera>(true);
+        Camera[] cameras = root.GetComponentsInChildren<Camera>(true);
 
         foreach (Camera candidate in cameras)
         {
@@ -257,115 +131,6 @@ public sealed class PlayerInteractor : MonoBehaviour
         return Camera.main;
     }
 
-    private TMP_Text FindTextHint()
-    {
-        Transform root = transform.root;
-
-        TMP_Text[] texts =
-            root.GetComponentsInChildren<TMP_Text>(true);
-
-        foreach (TMP_Text candidate in texts)
-        {
-            if (candidate != null &&
-                candidate.gameObject.name == "TextHint")
-            {
-                return candidate;
-            }
-        }
-
-        return texts.Length > 0
-            ? texts[0]
-            : null;
-    }
-
-    private void SubscribeToInteractAction()
-    {
-        if (playerInput == null ||
-            playerInput.actions == null)
-        {
-            return;
-        }
-
-        InputAction nextInteractAction =
-            playerInput.actions.FindAction(
-                InteractActionName,
-                false);
-
-        if (nextInteractAction == null ||
-            ReferenceEquals(
-                interactAction,
-                nextInteractAction))
-        {
-            return;
-        }
-
-        UnsubscribeFromInteractAction();
-
-        interactAction = nextInteractAction;
-        interactAction.performed += OnInteractPerformed;
-    }
-
-    private void UnsubscribeFromInteractAction()
-    {
-        if (interactAction == null)
-        {
-            return;
-        }
-
-        interactAction.performed -= OnInteractPerformed;
-        interactAction = null;
-    }
-
-    private void OnInteractPerformed(
-        InputAction.CallbackContext context)
-    {
-        if (currentTarget == null)
-        {
-            return;
-        }
-
-        IInteractable interactable =
-            FindInteractable(currentTarget);
-
-        if (interactable == null)
-        {
-            return;
-        }
-
-        interactable.Interact();
-    }
-
-    private IInteractable FindInteractable(
-        Transform interactTransform)
-    {
-        if (interactTransform == null)
-        {
-            return null;
-        }
-
-        IInteractable interactable =
-            interactTransform.GetComponent(
-                typeof(IInteractable)) as IInteractable;
-
-        if (interactable != null)
-        {
-            return interactable;
-        }
-
-        interactable =
-            interactTransform.GetComponentInParent(
-                typeof(IInteractable)) as IInteractable;
-
-        if (interactable != null)
-        {
-            return interactable;
-        }
-
-        return interactTransform.GetComponentInChildren(
-            typeof(IInteractable),
-            true) as IInteractable;
-    }
-
     private Transform FindCurrentTarget()
     {
         if (interactionCamera == null ||
@@ -375,44 +140,35 @@ public sealed class PlayerInteractor : MonoBehaviour
         }
 
         Ray ray = interactionCamera.ViewportPointToRay(
-            new Vector3(
-                viewportPoint.x,
-                viewportPoint.y,
-                0f));
+            new Vector3(viewportPoint.x, viewportPoint.y, 0f));
 
-        bool hasHit = Physics.Raycast(
-            ray,
-            out RaycastHit hit,
-            interactionRayDistance,
-            interactionLayers,
-            QueryTriggerInteraction.Ignore);
-
-        if (!hasHit)
+        if (!Physics.Raycast(
+                ray,
+                out RaycastHit hit,
+                interactionRayDistance,
+                interactionLayers,
+                QueryTriggerInteraction.Ignore))
         {
             return null;
         }
 
-        Transform interactTransform =
-            ResolveInteractTransform(
-                hit.collider.transform);
+        Transform interactionTransform =
+            ResolveInteractionTransform(hit.collider.transform);
 
-        if (interactTransform == null ||
-            !IsTracked(interactTransform))
+        if (interactionTransform == null ||
+            !IsTracked(interactionTransform))
         {
             return null;
         }
 
-        return interactTransform;
+        return interactionTransform;
     }
 
-    private bool IsTracked(Transform interactTransform)
+    private bool IsTracked(Transform interactionTransform)
     {
-        for (int i = trackedColliders.Count - 1;
-             i >= 0;
-             i--)
+        for (int i = trackedColliders.Count - 1; i >= 0; i--)
         {
-            Collider trackedCollider =
-                trackedColliders[i];
+            Collider trackedCollider = trackedColliders[i];
 
             if (trackedCollider == null)
             {
@@ -421,10 +177,9 @@ public sealed class PlayerInteractor : MonoBehaviour
             }
 
             Transform trackedTransform =
-                ResolveInteractTransform(
-                    trackedCollider.transform);
+                ResolveInteractionTransform(trackedCollider.transform);
 
-            if (trackedTransform == interactTransform)
+            if (trackedTransform == interactionTransform)
             {
                 return true;
             }
@@ -433,15 +188,41 @@ public sealed class PlayerInteractor : MonoBehaviour
         return false;
     }
 
-    private static Transform ResolveInteractTransform(
-        Transform origin)
+    private static T FindComponentInHierarchy<T>(Transform target)
+        where T : class
+    {
+        if (target == null)
+        {
+            return null;
+        }
+
+        T component =
+            target.GetComponent(typeof(T)) as T;
+
+        if (component != null)
+        {
+            return component;
+        }
+
+        component =
+            target.GetComponentInParent(typeof(T)) as T;
+
+        if (component != null)
+        {
+            return component;
+        }
+
+        return target.GetComponentInChildren(typeof(T), true) as T;
+    }
+
+    private static Transform ResolveInteractionTransform(Transform origin)
     {
         if (origin == null)
         {
             return null;
         }
 
-        if (origin.CompareTag(InteractTag))
+        if (IsInteractionTransform(origin))
         {
             return origin;
         }
@@ -450,7 +231,7 @@ public sealed class PlayerInteractor : MonoBehaviour
 
         while (parent != null)
         {
-            if (parent.CompareTag(InteractTag))
+            if (IsInteractionTransform(parent))
             {
                 return parent;
             }
@@ -458,11 +239,18 @@ public sealed class PlayerInteractor : MonoBehaviour
             parent = parent.parent;
         }
 
-        return FindTaggedChild(origin);
+        return FindInteractionChild(origin);
     }
 
-    private static Transform FindTaggedChild(
-        Transform origin)
+    private static bool IsInteractionTransform(Transform target)
+    {
+        return target != null &&
+               (target.CompareTag(InteractTag) ||
+                target.GetComponent(typeof(IInteractable)) != null ||
+                target.GetComponent<CatchableAnimal>() != null);
+    }
+
+    private static Transform FindInteractionChild(Transform origin)
     {
         int childCount = origin.childCount;
 
@@ -470,13 +258,12 @@ public sealed class PlayerInteractor : MonoBehaviour
         {
             Transform child = origin.GetChild(i);
 
-            if (child.CompareTag(InteractTag))
+            if (IsInteractionTransform(child))
             {
                 return child;
             }
 
-            Transform nestedChild =
-                FindTaggedChild(child);
+            Transform nestedChild = FindInteractionChild(child);
 
             if (nestedChild != null)
             {
@@ -487,36 +274,23 @@ public sealed class PlayerInteractor : MonoBehaviour
         return null;
     }
 
-    private bool IsValidInteractCollider(Collider other)
+    private bool IsValidInteractionCollider(Collider other)
     {
-        if (other == null)
-        {
-            return false;
-        }
-
-        if (other.transform.root == transform.root)
-        {
-            return false;
-        }
-
-        return ResolveInteractTransform(
-            other.transform) != null;
+        return other != null &&
+               other.transform.root != transform.root &&
+               ResolveInteractionTransform(other.transform) != null;
     }
 
     private void PruneTrackedColliders()
     {
-        for (int i = trackedColliders.Count - 1;
-             i >= 0;
-             i--)
+        for (int i = trackedColliders.Count - 1; i >= 0; i--)
         {
-            Collider trackedCollider =
-                trackedColliders[i];
+            Collider trackedCollider = trackedColliders[i];
 
             if (trackedCollider == null ||
                 !trackedCollider.enabled ||
                 !trackedCollider.gameObject.activeInHierarchy ||
-                ResolveInteractTransform(
-                    trackedCollider.transform) == null)
+                ResolveInteractionTransform(trackedCollider.transform) == null)
             {
                 trackedColliders.RemoveAt(i);
             }
@@ -525,32 +299,11 @@ public sealed class PlayerInteractor : MonoBehaviour
 
     private void EnsureTriggerCollider()
     {
-        Collider triggerCollider =
-            GetComponent<Collider>();
+        Collider triggerCollider = GetComponent<Collider>();
 
         if (triggerCollider != null)
         {
             triggerCollider.isTrigger = true;
         }
-    }
-
-    private void SetHintVisible(bool isVisible)
-    {
-        if (textHint == null)
-        {
-            return;
-        }
-
-        if (textHint.gameObject.activeSelf == isVisible)
-        {
-            return;
-        }
-
-        textHint.gameObject.SetActive(isVisible);
-    }
-
-    private void HideHint()
-    {
-        SetHintVisible(false);
     }
 }

@@ -2,6 +2,6 @@ public enum AnimalState
 {
     Patrol,
     Flee,
-    Paralyzed,
-    Idle
+    Idle,
+    Carried
 }
