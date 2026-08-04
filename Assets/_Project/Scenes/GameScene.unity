@@ -9553,6 +9553,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 247a6fc16a8d4324fbbbbc0ecdf2190c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorBeh
+  closedLocalYAngle: 0
   openInNegativeDirection: 1
   rotationDuration: 0.5
   angleTolerance: 1
@@ -17425,6 +17426,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 247a6fc16a8d4324fbbbbc0ecdf2190c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorBeh
+  closedLocalYAngle: 270
   openInNegativeDirection: 1
   rotationDuration: 0.5
   angleTolerance: 1
@@ -17739,6 +17741,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 247a6fc16a8d4324fbbbbc0ecdf2190c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorBeh
+  closedLocalYAngle: 0
   openInNegativeDirection: 1
   rotationDuration: 0.5
   angleTolerance: 1
@@ -29357,7 +29360,7 @@ Transform:
   m_GameObject: {fileID: 1076813739}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2.236, y: 1, z: 0.852}
+  m_LocalPosition: {x: 1.665, y: 0.105, z: 1.742}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -29608,6 +29611,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 247a6fc16a8d4324fbbbbc0ecdf2190c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorBeh
+  closedLocalYAngle: 0
   openInNegativeDirection: 1
   rotationDuration: 0.5
   angleTolerance: 1
@@ -36550,7 +36554,7 @@ Transform:
   m_GameObject: {fileID: 1290475867}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.665, y: 1, z: 13.459}
+  m_LocalPosition: {x: -0.665, y: 0.105, z: 12.105}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -38313,6 +38317,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 247a6fc16a8d4324fbbbbc0ecdf2190c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorBeh
+  closedLocalYAngle: 0
   openInNegativeDirection: 1
   rotationDuration: 0.5
   angleTolerance: 1
@@ -38412,7 +38417,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -42023,7 +42028,7 @@ Transform:
   m_GameObject: {fileID: 1492940200}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -4.614, y: 1, z: -2.727}
+  m_LocalPosition: {x: -4.614, y: 0.105, z: -1.748}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -46109,6 +46114,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 247a6fc16a8d4324fbbbbc0ecdf2190c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorBeh
+  closedLocalYAngle: 270
   openInNegativeDirection: 1
   rotationDuration: 0.5
   angleTolerance: 1
@@ -49966,6 +49972,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 247a6fc16a8d4324fbbbbc0ecdf2190c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DoorBeh
+  closedLocalYAngle: 0
   openInNegativeDirection: 1
   rotationDuration: 0.5
   angleTolerance: 1
@@ -50052,7 +50059,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
@@ -50312,7 +50319,7 @@ Transform:
   m_GameObject: {fileID: 1681995511}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 3.232, z: -1}
+  m_LocalPosition: {x: -6, y: 3.232, z: -1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -50795,10 +50802,10 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 1, y: 1, z: 1.079744}
+  m_Center: {x: 0.0000000014650755, y: 0, z: -0.03987199}
 --- !u!23 &1705458305
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -51865,6 +51872,10 @@ PrefabInstance:
     - target: {fileID: 8130921515360841392, guid: 39868262e399a4c48bf3739708613d2b, type: 3}
       propertyPath: m_Name
       value: Aparment_Door
+      objectReference: {fileID: 0}
+    - target: {fileID: 8130921515360841392, guid: 39868262e399a4c48bf3739708613d2b, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8130921515360841393, guid: 39868262e399a4c48bf3739708613d2b, type: 3}
       propertyPath: m_Size.x
@@ -62305,6 +62316,7 @@ MonoBehaviour:
   fleeDistance: 5
   fleeCandidateCount: 5
   fleeSpreadAngle: 120
+  fleeSpeedMultiplier: 2
 --- !u!114 &2620688613756775890
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -62399,6 +62411,10 @@ PrefabInstance:
     - target: {fileID: 568518938908206355, guid: f66c599403bd675418053b955426921c, type: 3}
       propertyPath: m_LocalPosition.z
       value: 0.18500005
+      objectReference: {fileID: 0}
+    - target: {fileID: 944110676735060642, guid: f66c599403bd675418053b955426921c, type: 3}
+      propertyPath: m_Radius
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 944110676735060642, guid: f66c599403bd675418053b955426921c, type: 3}
       propertyPath: m_Material
@@ -62635,6 +62651,7 @@ MonoBehaviour:
   fleeDistance: 5
   fleeCandidateCount: 5
   fleeSpreadAngle: 120
+  fleeSpeedMultiplier: 2
 --- !u!114 &4767059835947264514
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -63619,6 +63636,7 @@ MonoBehaviour:
   fleeDistance: 5
   fleeCandidateCount: 5
   fleeSpreadAngle: 120
+  fleeSpeedMultiplier: 2
 --- !u!114 &5403226855546192602
 MonoBehaviour:
   m_ObjectHideFlags: 0

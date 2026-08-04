@@ -4,9 +4,10 @@ using UnityEngine;
 
 public sealed class DoorBeh : MonoBehaviour, IInteractable
 {
-    private const float ClosedAngle = 0f;
     private const float OpenAngle = 90f;
 
+    [SerializeField, Range(0f, 360f)]
+    private float closedLocalYAngle;
     [SerializeField] private bool openInNegativeDirection;
     [SerializeField, Min(0f)] private float rotationDuration = 0.5f;
     [SerializeField, Min(0f)] private float angleTolerance = 1f;
@@ -16,7 +17,8 @@ public sealed class DoorBeh : MonoBehaviour, IInteractable
     private bool isOpen;
 
     private float TargetOpenAngle =>
-        openInNegativeDirection ? -OpenAngle : OpenAngle;
+        closedLocalYAngle +
+        (openInNegativeDirection ? -OpenAngle : OpenAngle);
 
     public bool IsOpen => isOpen;
     public bool IsMoving =>
@@ -46,12 +48,12 @@ public sealed class DoorBeh : MonoBehaviour, IInteractable
             return;
         }
 
-        if (!IsMoving && !isOpen && IsAtAngle(ClosedAngle))
+        if (!IsMoving && !isOpen && IsAtAngle(closedLocalYAngle))
         {
             return;
         }
 
-        RotateDoor(ClosedAngle, DoorMotion.Closing);
+        RotateDoor(closedLocalYAngle, DoorMotion.Closing);
     }
 
     public void OpenDoor()
