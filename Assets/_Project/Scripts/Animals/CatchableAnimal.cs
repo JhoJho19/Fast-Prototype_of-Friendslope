@@ -21,9 +21,11 @@ public sealed class CatchableAnimal : MonoBehaviour
 
     private Transform originalParent;
     private bool isCarried;
+    private bool isFrozen;
 
     public CatchableAnimalKind Kind => animalKind;
     public bool IsCarried => isCarried;
+    public bool IsFrozen => isFrozen;
 
     public bool CanBeCaught =>
         !isCarried &&
@@ -175,6 +177,43 @@ public sealed class CatchableAnimal : MonoBehaviour
         {
             stateMachine.SetState(AnimalState.Flee);
         }
+    }
+
+    public void Freeze()
+    {
+        if (isFrozen || isCarried)
+        {
+            return;
+        }
+
+        isFrozen = true;
+
+        if (agent != null &&
+            agent.isActiveAndEnabled)
+        {
+            agent.isStopped = true;
+            agent.ResetPath();
+            agent.enabled = false;
+        }
+
+        if (stateMachine != null)
+        {
+            stateMachine.Movement.ResetNavMeshBinding();
+        }
+
+        Behaviour[] behaviours =
+            GetComponentsInChildren<Behaviour>(true);
+
+        foreach (Behaviour behaviour in behaviours)
+        {
+            if (behaviour != null &&
+                behaviour != this)
+            {
+                behaviour.enabled = false;
+            }
+        }
+
+        enabled = false;
     }
 
     private void FindReferences()

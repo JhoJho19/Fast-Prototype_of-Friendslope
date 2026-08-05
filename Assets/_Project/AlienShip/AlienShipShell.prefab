@@ -446,6 +446,7 @@ GameObject:
   - component: {fileID: 908721702511132778}
   - component: {fileID: 2198594246482274154}
   - component: {fileID: 7301526166132091276}
+  - component: {fileID: 4025506318908475132}
   m_Layer: 0
   m_Name: Ship_Floor
   m_TagString: Untagged
@@ -1122,6 +1123,23 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 0}
+--- !u!114 &4025506318908475132
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 351766200308833754}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4f2c8a7b1d34e2b9c6a3f8d5e7b1c09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  triggerHeight: 0.6
+  animalLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  checkInterval: 0.1
 --- !u!1 &565300471144754430
 GameObject:
   m_ObjectHideFlags: 0
