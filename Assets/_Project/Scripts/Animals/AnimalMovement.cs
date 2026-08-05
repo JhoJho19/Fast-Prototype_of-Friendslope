@@ -6,7 +6,7 @@ using UnityEngine.AI;
 public sealed class AnimalMovement : MonoBehaviour
 {
     [SerializeField, Min(0f)] private float arrivalDistanceTolerance = 0.05f;
-    [SerializeField, Min(0.01f)] private float navMeshSnapDistance = 0.5f;
+    [SerializeField, Min(0.01f)] private float navMeshSnapDistance = 0.25f;
     [SerializeField, Min(0f)] private float movementSpeedThreshold = 0.01f;
 
     private NavMeshAgent agent;

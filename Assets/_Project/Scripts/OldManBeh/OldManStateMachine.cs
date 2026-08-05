@@ -6,7 +6,6 @@ using UnityEngine;
 [RequireComponent(typeof(OldManCombat))]
 public class OldManStateMachine : MonoBehaviour
 {
-    [SerializeField] private float playerDetectionRadius = 3f;
     public enum OldManState
     {
         Patrol,
@@ -24,6 +23,8 @@ public class OldManStateMachine : MonoBehaviour
     private PlayerHealth playerHealth;
     private Collider playerCollider;
     private Collider stairsTrigger;
+    private Collider hearingTrigger;
+    private Collider watchingTrigger;
 
     public OldManState CurrentState => currentState;
 
@@ -33,6 +34,7 @@ public class OldManStateMachine : MonoBehaviour
         patrol = GetComponent<OldManPatrol>();
         animationController = GetComponent<OldManAnimation>();
         combat = GetComponent<OldManCombat>();
+        FindSensors();
     }
 
     private void Start()
@@ -121,6 +123,23 @@ public class OldManStateMachine : MonoBehaviour
         }
     }
 
+    private void FindSensors()
+    {
+        Transform hearingTransform = transform.Find("Old man hearing");
+
+        if (hearingTransform != null)
+        {
+            hearingTrigger = hearingTransform.GetComponent<Collider>();
+        }
+
+        Transform watchingTransform = transform.Find("Old man watrching");
+
+        if (watchingTransform != null)
+        {
+            watchingTrigger = watchingTransform.GetComponent<Collider>();
+        }
+    }
+
     private void TryDetectPlayer()
     {
         if (IsOnStairs())
@@ -138,18 +157,21 @@ public class OldManStateMachine : MonoBehaviour
             return;
         }
 
-        Vector3 delta = playerCollider.transform.position - transform.position;
-
-        delta.y = 0f;
-
-        if (delta.sqrMagnitude >
-            playerDetectionRadius * playerDetectionRadius)
+        if (!IsPlayerInsideSensor(hearingTrigger) &&
+            !IsPlayerInsideSensor(watchingTrigger))
         {
             return;
         }
 
         combat.BeginAim(playerHealth, playerHealth.transform, playerCollider);
         SetState(OldManState.Aiming);
+    }
+
+    private bool IsPlayerInsideSensor(Collider sensor)
+    {
+        return sensor != null &&
+               sensor.enabled &&
+               sensor.bounds.Intersects(playerCollider.bounds);
     }
 
     private bool IsOnStairs()
