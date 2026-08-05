@@ -4,12 +4,11 @@ using UnityEngine;
 [RequireComponent(typeof(OldManAnimation))]
 public class OldManCombat : MonoBehaviour
 {
-    [SerializeField] private float aimDuration = 2f;
     [SerializeField] private float minAimTime = 1.2f;
+    [SerializeField] private float aimTimeout = 3f;
     [SerializeField] private float postShootPause = 1.2f;
     [SerializeField] private float rayOriginHeight = 1.4f;
     [SerializeField] private float angularSpeed = 240f;
-    [SerializeField] private float facingTolerance = 15f;
 
     private OldManMovement movement;
     private OldManAnimation animationController;
@@ -17,8 +16,15 @@ public class OldManCombat : MonoBehaviour
     private Transform playerRoot;
     private PlayerHealth playerHealth;
     private Collider playerCollider;
-    private float aimTimer;
+    private float aimElapsed;
     private float postShootTimer;
+
+    public enum AimResult
+    {
+        StillAiming,
+        Fire,
+        GiveUp
+    }
 
     public string LastDebug => lastDebug;
 
@@ -36,40 +42,38 @@ public class OldManCombat : MonoBehaviour
         playerHealth = health;
         playerRoot = root;
         playerCollider = targetCollider;
-        aimTimer = aimDuration;
+        aimElapsed = 0f;
         movement.Stop();
         animationController.PlayAim();
         lastDebug = "BeginAim";
     }
 
-    public bool UpdateAiming(float deltaTime)
+    public AimResult UpdateAiming(float deltaTime)
     {
         if (playerRoot == null)
         {
-            return false;
+            return AimResult.GiveUp;
         }
 
         RotateTowardsPlayer();
 
-        aimTimer -= deltaTime;
+        aimElapsed += deltaTime;
 
-        float aimElapsed = aimDuration - aimTimer;
-        bool minTimeElapsed = aimElapsed >= minAimTime;
         bool onTarget = IsPlayerInSights();
 
-        if (onTarget && minTimeElapsed)
+        if (onTarget && aimElapsed >= minAimTime)
         {
             lastDebug = "AimFinished:OnTarget";
-            return false;
+            return AimResult.Fire;
         }
 
-        if (aimTimer <= 0f)
+        if (aimElapsed >= aimTimeout)
         {
-            lastDebug = "AimFinished:MaxTime";
-            return false;
+            lastDebug = "AimFinished:Timeout";
+            return AimResult.GiveUp;
         }
 
-        return true;
+        return AimResult.StillAiming;
     }
 
     public void Shoot()
@@ -105,38 +109,12 @@ public class OldManCombat : MonoBehaviour
 
     private bool IsPlayerInSights()
     {
-        if (playerRoot == null || playerCollider == null)
-        {
-            return false;
-        }
-
-        if (shotgunSensor != null && shotgunSensor.IsPlayerInSights)
-        {
-            return true;
-        }
-
-        return IsFacingPlayer();
-    }
-
-    private bool IsFacingPlayer()
-    {
-        Vector3 toPlayer = playerRoot.position - transform.position;
-
-        toPlayer.y = 0f;
-
-        if (toPlayer.sqrMagnitude <= Mathf.Epsilon)
-        {
-            return false;
-        }
-
-        float angle = Vector3.Angle(transform.forward, toPlayer.normalized);
-
-        return angle <= facingTolerance;
+        return shotgunSensor != null && shotgunSensor.IsPlayerInSights;
     }
 
     private void RotateTowardsPlayer()
     {
-        Vector3 direction = playerRoot.position - transform.position;
+        Vector3 direction = GetPlayerPosition() - transform.position;
 
         direction.y = 0f;
 
@@ -161,7 +139,7 @@ public class OldManCombat : MonoBehaviour
             return;
         }
 
-        Vector3 direction = playerRoot.position - transform.position;
+        Vector3 direction = GetPlayerPosition() - transform.position;
 
         direction.y = 0f;
 
@@ -172,6 +150,21 @@ public class OldManCombat : MonoBehaviour
 
         transform.rotation =
             Quaternion.LookRotation(direction.normalized);
+    }
+
+    private Vector3 GetPlayerPosition()
+    {
+        if (playerCollider != null)
+        {
+            return playerCollider.transform.position;
+        }
+
+        if (playerRoot != null)
+        {
+            return playerRoot.position;
+        }
+
+        return transform.position;
     }
 
     private void FireAtPlayer()

@@ -45,9 +45,14 @@ public class OldManStateMachine : MonoBehaviour
                 break;
 
             case OldManState.Aiming:
-                if (!combat.UpdateAiming(Time.deltaTime))
+                OldManCombat.AimResult aimResult = combat.UpdateAiming(Time.deltaTime);
+                if (aimResult == OldManCombat.AimResult.Fire)
                 {
                     SetState(OldManState.Shooting);
+                }
+                else if (aimResult == OldManCombat.AimResult.GiveUp)
+                {
+                    SetState(OldManState.Patrol);
                 }
                 break;
 
