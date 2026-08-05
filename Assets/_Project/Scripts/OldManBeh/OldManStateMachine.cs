@@ -3,6 +3,7 @@ using UnityEngine;
 [RequireComponent(typeof(OldManMovement))]
 [RequireComponent(typeof(OldManPatrol))]
 [RequireComponent(typeof(OldManAnimation))]
+[RequireComponent(typeof(OldManCombat))]
 public class OldManStateMachine : MonoBehaviour
 {
     public enum OldManState
@@ -16,6 +17,7 @@ public class OldManStateMachine : MonoBehaviour
     private OldManMovement movement;
     private OldManPatrol patrol;
     private OldManAnimation animationController;
+    private OldManCombat combat;
     private OldManState currentState;
     private bool isInitialized;
 
@@ -26,6 +28,7 @@ public class OldManStateMachine : MonoBehaviour
         movement = GetComponent<OldManMovement>();
         patrol = GetComponent<OldManPatrol>();
         animationController = GetComponent<OldManAnimation>();
+        combat = GetComponent<OldManCombat>();
     }
 
     private void Start()
@@ -35,9 +38,25 @@ public class OldManStateMachine : MonoBehaviour
 
     private void Update()
     {
-        if (currentState == OldManState.Patrol)
+        switch (currentState)
         {
-            patrol.Tick();
+            case OldManState.Patrol:
+                patrol.Tick();
+                break;
+
+            case OldManState.Aiming:
+                if (!combat.UpdateAiming(Time.deltaTime))
+                {
+                    SetState(OldManState.Shooting);
+                }
+                break;
+
+            case OldManState.Shooting:
+                if (!combat.UpdateShooting(Time.deltaTime))
+                {
+                    SetState(OldManState.Patrol);
+                }
+                break;
         }
 
         bool isMovingAlongPatrolRoute =
@@ -46,6 +65,24 @@ public class OldManStateMachine : MonoBehaviour
             movement.IsMoving;
 
         animationController.SetMoving(isMovingAlongPatrolRoute);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (currentState != OldManState.Patrol)
+        {
+            return;
+        }
+
+        PlayerHealth health = other.GetComponentInParent<PlayerHealth>();
+
+        if (health == null)
+        {
+            return;
+        }
+
+        combat.BeginAim(health, health.transform, other);
+        SetState(OldManState.Aiming);
     }
 
     public void SetState(OldManState newState)
@@ -66,25 +103,20 @@ public class OldManStateMachine : MonoBehaviour
         switch (state)
         {
             case OldManState.Patrol:
+                combat.Abort();
                 animationController.PlayPatrol();
                 patrol.Enter();
                 break;
 
             case OldManState.Chasing:
-                // Placeholder for target pursuit.
                 movement.Stop();
                 break;
 
             case OldManState.Aiming:
-                // Placeholder for target selection and aiming logic.
-                movement.Stop();
-                animationController.PlayAim();
                 break;
 
             case OldManState.Shooting:
-                // Placeholder for weapon and damage logic.
-                movement.Stop();
-                animationController.PlayShoot();
+                combat.Shoot();
                 break;
         }
     }
