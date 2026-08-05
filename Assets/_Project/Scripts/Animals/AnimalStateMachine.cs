@@ -7,9 +7,8 @@ using UnityEngine;
 public sealed class AnimalStateMachine : MonoBehaviour
 {
     [SerializeField, Min(0f)] private float idleDuration = 2f;
-    [SerializeField, Min(0.1f)] private float fleeDistance = 5f;
-    [SerializeField, Min(1)] private int fleeCandidateCount = 5;
-    [SerializeField, Range(0f, 180f)] private float fleeSpreadAngle = 120f;
+    [SerializeField, Min(0f)] private float fleeChaseRange = 8f;
+    [SerializeField, Min(0f)] private float fleeChaseTimeout = 2.5f;
     [SerializeField, Min(1f)] private float fleeSpeedMultiplier = 2f;
 
     private AnimalMovement movement;
@@ -19,12 +18,13 @@ public sealed class AnimalStateMachine : MonoBehaviour
     private bool isInitialized;
     private bool hasFleeSource;
     private Vector3 fleeSource;
+    private float lastFleeSourceTime;
 
     public AnimalState CurrentState { get; private set; }
     internal float IdleDuration => idleDuration;
-    internal float FleeDistance => fleeDistance;
-    internal int FleeCandidateCount => fleeCandidateCount;
-    internal float FleeSpreadAngle => fleeSpreadAngle;
+    internal float FleeChaseRange => fleeChaseRange;
+    internal float FleeChaseTimeout => fleeChaseTimeout;
+    internal float LastFleeSourceTime => lastFleeSourceTime;
     internal float FleeSpeedMultiplier =>
         fleeSpeedMultiplier > 0f ? fleeSpeedMultiplier : 2f;
     internal AnimalMovement Movement => movement;
@@ -84,6 +84,7 @@ public sealed class AnimalStateMachine : MonoBehaviour
     {
         fleeSource = source;
         hasFleeSource = true;
+        lastFleeSourceTime = Time.time;
     }
 
     internal bool TryGetFleeSource(out Vector3 source)

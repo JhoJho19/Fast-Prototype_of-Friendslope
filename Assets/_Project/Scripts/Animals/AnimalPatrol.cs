@@ -52,6 +52,71 @@ public sealed class AnimalPatrol : MonoBehaviour
         return false;
     }
 
+    public Transform FindNearestPatrolPoint()
+    {
+        CollectValidPoints();
+
+        if (candidates.Count == 0)
+        {
+            WarnOnce(
+                ref missingPointsWarningShown,
+                "requires at least one assigned patrol point.");
+            return null;
+        }
+
+        Transform nearest = null;
+        float nearestSqrDistance = float.MaxValue;
+        Vector3 selfPosition = transform.position;
+
+        foreach (Transform point in candidates)
+        {
+            float sqrDistance =
+                (point.position - selfPosition).sqrMagnitude;
+
+            if (sqrDistance < nearestSqrDistance)
+            {
+                nearestSqrDistance = sqrDistance;
+                nearest = point;
+            }
+        }
+
+        return nearest;
+    }
+
+    public Transform FindRandomPatrolPoint(Transform excludePoint)
+    {
+        CollectValidPoints();
+
+        if (candidates.Count == 0)
+        {
+            WarnOnce(
+                ref missingPointsWarningShown,
+                "requires at least one assigned patrol point.");
+            return null;
+        }
+
+        Transform selected = null;
+
+        for (int attempt = 0; attempt < 10; attempt++)
+        {
+            Transform candidate =
+                candidates[Random.Range(0, candidates.Count)];
+
+            if (candidate != excludePoint)
+            {
+                selected = candidate;
+                break;
+            }
+        }
+
+        if (selected == null)
+        {
+            selected = candidates[Random.Range(0, candidates.Count)];
+        }
+
+        return selected;
+    }
+
     private void CollectValidPoints()
     {
         candidates.Clear();

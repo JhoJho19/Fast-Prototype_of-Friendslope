@@ -72,14 +72,8 @@ internal sealed class AnimalIdleState : IAnimalState
 
 internal sealed class AnimalFleeState : IAnimalState
 {
-    private static readonly float[] DistanceMultipliers =
-    {
-        1f,
-        0.75f,
-        0.5f
-    };
-
     private readonly AnimalStateMachine machine;
+    private Transform fleeTargetPoint;
 
     public AnimalFleeState(AnimalStateMachine machine)
     {
@@ -92,7 +86,15 @@ internal sealed class AnimalFleeState : IAnimalState
             machine.FleeSpeedMultiplier);
         machine.AnimationController.PlayFlee(true);
 
-        if (!TryStartFlee())
+        fleeTargetPoint = machine.Patrol.FindNearestPatrolPoint();
+
+        if (fleeTargetPoint != null &&
+            machine.Movement.TryMoveTo(fleeTargetPoint.position))
+        {
+            return;
+        }
+
+        if (!TrySelectRandomTarget())
         {
             machine.Movement.Stop();
         }
@@ -102,107 +104,79 @@ internal sealed class AnimalFleeState : IAnimalState
     {
         if (machine.Movement.PathStatus != NavMeshPathStatus.PathComplete)
         {
-            TryStartFlee();
+            TryContinueFlee();
             return;
         }
 
-        if (machine.Movement.HasReachedDestination)
+        if (!machine.Movement.HasReachedDestination)
         {
-            TryStartFlee();
+            return;
         }
+
+        if (IsPlayerStillChasing())
+        {
+            TryContinueFlee();
+            return;
+        }
+
+        machine.SetState(AnimalState.Idle);
     }
 
     public void Exit()
     {
         machine.Movement.SetSpeedMultiplier(1f);
         machine.AnimationController.PlayFlee(false);
+        fleeTargetPoint = null;
     }
 
-    private bool TryStartFlee()
+    private void TryContinueFlee()
     {
+        if (TrySelectRandomTarget())
+        {
+            return;
+        }
+
+        machine.Movement.Stop();
+        machine.SetState(AnimalState.Idle);
+    }
+
+    private bool TrySelectRandomTarget()
+    {
+        for (int attempt = 0; attempt < 10; attempt++)
+        {
+            Transform target =
+                machine.Patrol.FindRandomPatrolPoint(fleeTargetPoint);
+
+            if (target == null)
+            {
+                return false;
+            }
+
+            if (machine.Movement.TryMoveTo(target.position))
+            {
+                fleeTargetPoint = target;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool IsPlayerStillChasing()
+    {
+        if (!machine.TryGetFleeSource(out Vector3 source) ||
+            Time.time - machine.LastFleeSourceTime > machine.FleeChaseTimeout)
+        {
+            return false;
+        }
+
         Vector3 sourcePosition =
-            machine.TryGetFleeSource(out Vector3 fleeSource)
-                ? fleeSource
-                : machine.transform.position - machine.transform.forward;
+            Vector3.ProjectOnPlane(source, Vector3.up);
+        Vector3 selfPosition =
+            Vector3.ProjectOnPlane(machine.transform.position, Vector3.up);
 
-        Vector3 awayDirection =
-            machine.transform.position - sourcePosition;
-
-        awayDirection = Vector3.ProjectOnPlane(awayDirection, Vector3.up);
-
-        if (awayDirection.sqrMagnitude <= 0.0001f)
-        {
-            awayDirection =
-                Vector3.ProjectOnPlane(
-                    -machine.transform.forward,
-                    Vector3.up);
-        }
-
-        if (awayDirection.sqrMagnitude <= 0.0001f)
-        {
-            awayDirection = Vector3.forward;
-        }
-
-        awayDirection.Normalize();
-
-        for (int distanceIndex = 0;
-             distanceIndex < DistanceMultipliers.Length;
-             distanceIndex++)
-        {
-            float fleeDistance =
-                machine.FleeDistance * DistanceMultipliers[distanceIndex];
-
-            if (TryMoveInDirection(awayDirection, fleeDistance))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private bool TryMoveInDirection(Vector3 awayDirection, float fleeDistance)
-    {
-        int candidateCount = Mathf.Max(1, machine.FleeCandidateCount);
-        float halfSpread = machine.FleeSpreadAngle * 0.5f;
-
-        if (TryMoveToCandidate(awayDirection, fleeDistance))
-        {
-            return true;
-        }
-
-        for (int i = 0; i < candidateCount; i++)
-        {
-            float t =
-                candidateCount == 1
-                    ? 0.5f
-                    : (i + 1f) / (candidateCount + 1f);
-
-            float angle = Mathf.Lerp(-halfSpread, halfSpread, t);
-
-            if (Mathf.Approximately(angle, 0f))
-            {
-                continue;
-            }
-
-            Vector3 candidateDirection =
-                Quaternion.AngleAxis(angle, Vector3.up) * awayDirection;
-
-            if (TryMoveToCandidate(candidateDirection, fleeDistance))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private bool TryMoveToCandidate(Vector3 direction, float fleeDistance)
-    {
-        Vector3 destination =
-            machine.transform.position + direction * fleeDistance;
-
-        return machine.Movement.TryMoveTo(destination);
+        return Vector3.Distance(sourcePosition, selfPosition) <=
+               machine.FleeChaseRange;
     }
 }
 
