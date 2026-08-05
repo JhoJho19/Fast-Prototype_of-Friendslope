@@ -11,6 +11,8 @@ public class OldManPatrol : MonoBehaviour
     private float patrolWaitEndTime;
     private bool isWaitingAtPatrolPoint;
     private bool missingPatrolPointsWarningShown;
+    private bool firstPatrol = true;
+    private static readonly int[] FirstPatrolExcludedIndices = { 2, 3 };
 
     public bool IsWaiting => isWaitingAtPatrolPoint;
 
@@ -75,8 +77,12 @@ public class OldManPatrol : MonoBehaviour
         }
         while (patrolPoints[nextPatrolPointIndex] == null ||
                validPatrolPointCount > 1 &&
-               nextPatrolPointIndex == currentPatrolPointIndex);
+               nextPatrolPointIndex == currentPatrolPointIndex ||
+               firstPatrol &&
+               System.Array.IndexOf(FirstPatrolExcludedIndices, nextPatrolPointIndex) >= 0 &&
+               validPatrolPointCount > 1);
 
+        firstPatrol = false;
         currentPatrolPointIndex = nextPatrolPointIndex;
         movement.MoveTo(patrolPoints[currentPatrolPointIndex].position);
     }

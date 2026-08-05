@@ -1135,11 +1135,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4f2c8a7b1d34e2b9c6a3f8d5e7b1c09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  triggerHeight: 0.6
-  animalLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  checkInterval: 0.1
 --- !u!1 &565300471144754430
 GameObject:
   m_ObjectHideFlags: 0

@@ -6,7 +6,7 @@ using UnityEngine.AI;
 public class OldManMovement : MonoBehaviour
 {
     [SerializeField] private float arrivalDistanceTolerance = 0.05f;
-    [SerializeField] private float navMeshSnapDistance = 0.3f;
+    [SerializeField] private float navMeshSnapDistance = 0.5f;
 
     private NavMeshAgent agent;
     private Animator animator;
@@ -50,7 +50,11 @@ public class OldManMovement : MonoBehaviour
     {
         Vector3 rootMotionPosition = animator.rootPosition;
 
-        if (!IsAgentOnNavMesh || agent.isStopped)
+        if (agent == null ||
+            !agent.isActiveAndEnabled ||
+            agent.isStopped ||
+            !agent.hasPath ||
+            agent.pathPending)
         {
             return;
         }
@@ -66,7 +70,8 @@ public class OldManMovement : MonoBehaviour
             return;
         }
 
-        agent.nextPosition = transform.position;
+        transform.position = rootMotionPosition;
+        agent.nextPosition = rootMotionPosition;
     }
 
     public void MoveTo(Vector3 destination)
