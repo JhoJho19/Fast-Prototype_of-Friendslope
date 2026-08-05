@@ -6,6 +6,7 @@ using UnityEngine;
 [RequireComponent(typeof(OldManCombat))]
 public class OldManStateMachine : MonoBehaviour
 {
+    [SerializeField] private float playerDetectionRadius = 3f;
     public enum OldManState
     {
         Patrol,
@@ -20,6 +21,9 @@ public class OldManStateMachine : MonoBehaviour
     private OldManCombat combat;
     private OldManState currentState;
     private bool isInitialized;
+    private PlayerHealth playerHealth;
+    private Collider playerCollider;
+    private Collider stairsTrigger;
 
     public OldManState CurrentState => currentState;
 
@@ -33,15 +37,25 @@ public class OldManStateMachine : MonoBehaviour
 
     private void Start()
     {
+        FindPlayer();
+        FindStairsTrigger();
         SetState(OldManState.Patrol);
     }
 
     private void Update()
     {
+        if (IsOnStairs() &&
+            (currentState == OldManState.Aiming ||
+             currentState == OldManState.Shooting))
+        {
+            SetState(OldManState.Patrol);
+        }
+
         switch (currentState)
         {
             case OldManState.Patrol:
                 patrol.Tick();
+                TryDetectPlayer();
                 break;
 
             case OldManState.Aiming:
@@ -72,22 +86,76 @@ public class OldManStateMachine : MonoBehaviour
         animationController.SetMoving(isMovingAlongPatrolRoute);
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void FindPlayer()
     {
-        if (currentState != OldManState.Patrol)
+        playerHealth = FindFirstObjectByType<PlayerHealth>();
+
+        if (playerHealth == null)
         {
             return;
         }
 
-        PlayerHealth health = other.GetComponentInParent<PlayerHealth>();
+        CharacterController character =
+            playerHealth.GetComponentInChildren<CharacterController>();
 
-        if (health == null)
+        playerCollider = character != null
+            ? character
+            : playerHealth.GetComponentInChildren<Collider>();
+    }
+
+    private void FindStairsTrigger()
+    {
+        Collider[] colliders =
+            FindObjectsByType<Collider>(FindObjectsSortMode.None);
+
+        foreach (Collider collider in colliders)
+        {
+            if (collider.isTrigger &&
+                collider.gameObject.name.IndexOf(
+                    "Stairs",
+                    System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                stairsTrigger = collider;
+                return;
+            }
+        }
+    }
+
+    private void TryDetectPlayer()
+    {
+        if (IsOnStairs())
         {
             return;
         }
 
-        combat.BeginAim(health, health.transform, other);
+        if (playerHealth == null || playerCollider == null)
+        {
+            FindPlayer();
+        }
+
+        if (playerHealth == null || playerCollider == null)
+        {
+            return;
+        }
+
+        Vector3 delta = playerCollider.transform.position - transform.position;
+
+        delta.y = 0f;
+
+        if (delta.sqrMagnitude >
+            playerDetectionRadius * playerDetectionRadius)
+        {
+            return;
+        }
+
+        combat.BeginAim(playerHealth, playerHealth.transform, playerCollider);
         SetState(OldManState.Aiming);
+    }
+
+    private bool IsOnStairs()
+    {
+        return stairsTrigger != null &&
+               stairsTrigger.bounds.Contains(transform.position);
     }
 
     public void SetState(OldManState newState)

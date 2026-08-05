@@ -1,7 +1,5 @@
 using UnityEngine;
 
-[RequireComponent(typeof(OldManMovement))]
-[RequireComponent(typeof(OldManAnimation))]
 public class OldManCombat : MonoBehaviour
 {
     [SerializeField] private float minAimTime = 1.2f;
@@ -9,6 +7,9 @@ public class OldManCombat : MonoBehaviour
     [SerializeField] private float postShootPause = 1.2f;
     [SerializeField] private float rayOriginHeight = 1.4f;
     [SerializeField] private float angularSpeed = 240f;
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip shootClip;
+    [SerializeField] private ParticleSystem shootVFX;
 
     private OldManMovement movement;
     private OldManAnimation animationController;
@@ -81,8 +82,14 @@ public class OldManCombat : MonoBehaviour
         movement.Stop();
         FacePlayer();
         animationController.PlayShoot();
-        FireAtPlayer();
         postShootTimer = postShootPause;
+    }
+
+    public void OldmanFireringEvent()
+    {
+        FireAtPlayer(); 
+        audioSource.PlayOneShot(shootClip);
+        shootVFX.Play();
     }
 
     public bool UpdateShooting(float deltaTime)

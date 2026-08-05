@@ -21,8 +21,6 @@ public sealed class OldManShotgunSensor : MonoBehaviour
         }
 
         playerColliders.Add(other);
-
-        Debug.Log("Игроков в прицеле " + playerColliders.Count);
     }
 
     private void OnTriggerExit(Collider other)
@@ -31,8 +29,6 @@ public sealed class OldManShotgunSensor : MonoBehaviour
         {
             return;
         }
-
-        Debug.Log("Игроков в прицеле " + playerColliders.Count);
     }
 
     private static bool IsPlayerCollider(Collider other)

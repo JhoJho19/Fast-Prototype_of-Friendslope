@@ -24,11 +24,15 @@ public class OldManAnimation : MonoBehaviour
 
     public void PlayAim()
     {
+        animator.ResetTrigger(PatrolTrigger);
+        animator.ResetTrigger(ShootTrigger);
         animator.SetTrigger(AimTrigger);
     }
 
     public void PlayShoot()
     {
+        animator.ResetTrigger(PatrolTrigger);
+        animator.ResetTrigger(AimTrigger);
         animator.SetTrigger(ShootTrigger);
     }
 
