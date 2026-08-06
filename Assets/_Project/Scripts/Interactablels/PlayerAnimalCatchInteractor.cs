@@ -16,6 +16,8 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
     private const string DogVisualName = "DogVisual";
     private const string CatVisualName = "CatVisual";
     private const string ParotVisualName = "ParotVisual";
+    private static readonly int IsCarryingParameter =
+        Animator.StringToHash("IsCarrying");
 
     [SerializeField] private string catchHint = "Hold left button to catch";
     [SerializeField] private int hintPriority = 10;
@@ -31,6 +33,7 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
     private PlayerInteractor interactor;
     private PlayerInteractionHintPresenter hintPresenter;
     private PlayerInput playerInput;
+    private Animator playerAnimator;
     private Transform releaseAnchor;
     private InputAction catchAction;
     private CatchableAnimal currentCatchable;
@@ -113,6 +116,11 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
             ReleaseCarriedAnimal();
         }
 
+        if (GetComponentInParent<CoopNetworkPlayer>()?.isLocalPlayer == true)
+        {
+            SetCarryingAnimation(false);
+        }
+
         HideCarryVisuals();
         currentCatchable = null;
         UnsubscribeFromAction();
@@ -133,6 +141,11 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
         if (playerInput == null)
         {
             playerInput = GetComponentInParent<PlayerInput>();
+        }
+
+        if (playerAnimator == null)
+        {
+            playerAnimator = GetComponentInChildren<Animator>(true);
         }
 
         if (releaseAnchor == null)
@@ -367,6 +380,7 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
 
         carriedAnimal.Release(anchor.position, playerForward);
         carriedAnimal = null;
+        SetCarryingAnimation(false);
         if (textMission != null)
         {
             textMission.SetActive(false);
@@ -413,6 +427,8 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
         {
             textMission.SetActive(false);
         }
+
+        SetCarryingAnimation(false);
     }
 
     public void ShowWinMessage(float duration)
@@ -492,6 +508,28 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
             !visual.activeSelf)
         {
             visual.SetActive(true);
+        }
+
+        SetCarryingAnimation(true);
+    }
+
+    private void SetCarryingAnimation(bool isCarrying)
+    {
+        if (playerAnimator == null ||
+            playerAnimator.runtimeAnimatorController == null)
+        {
+            return;
+        }
+
+        foreach (AnimatorControllerParameter parameter in
+                 playerAnimator.parameters)
+        {
+            if (parameter.nameHash == IsCarryingParameter &&
+                parameter.type == AnimatorControllerParameterType.Bool)
+            {
+                playerAnimator.SetBool(IsCarryingParameter, isCarrying);
+                return;
+            }
         }
     }
 

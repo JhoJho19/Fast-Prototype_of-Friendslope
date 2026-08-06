@@ -104,6 +104,7 @@ public sealed class DoorBeh : MonoBehaviour, IInteractable
         if (rotationDuration <= 0f)
         {
             transform.localEulerAngles = targetRotation;
+            Physics.SyncTransforms();
             CompleteRotation(motion);
             return;
         }
@@ -111,6 +112,7 @@ public sealed class DoorBeh : MonoBehaviour, IInteractable
         rotationTween = transform
             .DOLocalRotate(targetRotation, rotationDuration, RotateMode.Fast)
             .SetEase(Ease.InOutSine)
+            .OnUpdate(Physics.SyncTransforms)
             .OnComplete(() => CompleteRotation(motion));
     }
 
