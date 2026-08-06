@@ -9,20 +9,46 @@ public sealed class CoopNetworkAnimal : NetworkBehaviour
     [SyncVar(hook = nameof(OnCarrierChanged))]
     private uint carrierNetId;
 
+    [SyncVar(hook = nameof(OnFrozenChanged))]
+    private bool isFrozen;
+
     private CatchableAnimal animal;
     private Vector3 startPosition;
     private Quaternion startRotation;
+    private NetworkTransformBase networkTransform;
 
     private void Awake()
     {
         animal = GetComponent<CatchableAnimal>();
         startPosition = transform.position;
         startRotation = transform.rotation;
+        networkTransform = GetComponent<NetworkTransformBase>();
     }
 
     public override void OnStartClient()
     {
         ApplyNetworkState();
+
+        if (isFrozen)
+        {
+            animal?.Freeze();
+        }
+        else
+        {
+            animal?.Unfreeze();
+        }
+    }
+
+    [Server]
+    public void ServerFreeze()
+    {
+        if (animal == null || isCarried || isFrozen)
+        {
+            return;
+        }
+
+        isFrozen = true;
+        animal.Freeze();
     }
 
     public bool ServerTryCarry(CoopNetworkPlayer player)
@@ -70,6 +96,9 @@ public sealed class CoopNetworkAnimal : NetworkBehaviour
             return;
         }
 
+        isFrozen = false;
+        animal.Unfreeze();
+
         if (isCarried)
         {
             animal.Release(startPosition, startRotation * Vector3.forward);
@@ -80,6 +109,8 @@ public sealed class CoopNetworkAnimal : NetworkBehaviour
         }
 
         transform.SetPositionAndRotation(startPosition, startRotation);
+
+        networkTransform?.ServerTeleport(startPosition, startRotation);
 
         UnityEngine.AI.NavMeshAgent agent = GetComponent<UnityEngine.AI.NavMeshAgent>();
 
@@ -111,6 +142,23 @@ public sealed class CoopNetworkAnimal : NetworkBehaviour
     private void OnCarrierChanged(uint oldValue, uint newValue)
     {
         ApplyNetworkState();
+    }
+
+    private void OnFrozenChanged(bool oldValue, bool newValue)
+    {
+        if (animal == null)
+        {
+            return;
+        }
+
+        if (newValue)
+        {
+            animal.Freeze();
+        }
+        else
+        {
+            animal.Unfreeze();
+        }
     }
 
     private void ApplyNetworkState()

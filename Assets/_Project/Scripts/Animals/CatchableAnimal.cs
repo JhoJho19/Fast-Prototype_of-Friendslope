@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using Mirror;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -24,6 +26,14 @@ public sealed class CatchableAnimal : MonoBehaviour
     private Vector3 originalWorldScale;
     private bool isCarried;
     private bool isFrozen;
+    private readonly List<FrozenBehaviourState> frozenBehaviours =
+        new List<FrozenBehaviourState>();
+
+    private struct FrozenBehaviourState
+    {
+        public Behaviour Behaviour;
+        public bool WasEnabled;
+    }
 
     public CatchableAnimalKind Kind => animalKind;
     public bool IsCarried => isCarried;
@@ -212,6 +222,27 @@ public sealed class CatchableAnimal : MonoBehaviour
 
         isFrozen = true;
 
+        frozenBehaviours.Clear();
+
+        Behaviour[] behaviours =
+            GetComponentsInChildren<Behaviour>(true);
+
+        foreach (Behaviour behaviour in behaviours)
+        {
+            if (behaviour == null ||
+                behaviour == this ||
+                behaviour is NetworkBehaviour)
+            {
+                continue;
+            }
+
+            frozenBehaviours.Add(new FrozenBehaviourState
+            {
+                Behaviour = behaviour,
+                WasEnabled = behaviour.enabled
+            });
+        }
+
         if (agent != null &&
             agent.isActiveAndEnabled)
         {
@@ -225,19 +256,43 @@ public sealed class CatchableAnimal : MonoBehaviour
             stateMachine.Movement.ResetNavMeshBinding();
         }
 
-        Behaviour[] behaviours =
-            GetComponentsInChildren<Behaviour>(true);
-
-        foreach (Behaviour behaviour in behaviours)
+        foreach (FrozenBehaviourState frozenBehaviour in frozenBehaviours)
         {
-            if (behaviour != null &&
-                behaviour != this)
+            if (frozenBehaviour.Behaviour != null)
             {
-                behaviour.enabled = false;
+                frozenBehaviour.Behaviour.enabled = false;
             }
         }
 
         enabled = false;
+    }
+
+    public void Unfreeze()
+    {
+        if (!isFrozen)
+        {
+            return;
+        }
+
+        isFrozen = false;
+        enabled = true;
+
+        foreach (FrozenBehaviourState frozenBehaviour in frozenBehaviours)
+        {
+            if (frozenBehaviour.Behaviour != null)
+            {
+                frozenBehaviour.Behaviour.enabled = frozenBehaviour.WasEnabled;
+            }
+        }
+
+        if (agent != null && agent.isActiveAndEnabled)
+        {
+            agent.isStopped = false;
+            agent.ResetPath();
+            agent.nextPosition = transform.position;
+        }
+
+        frozenBehaviours.Clear();
     }
 
     private void FindReferences()

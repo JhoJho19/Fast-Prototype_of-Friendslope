@@ -1,3 +1,4 @@
+using Mirror;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -20,6 +21,23 @@ public sealed class ShipFloorAnimalStopper : MonoBehaviour
 
         if (animal != null)
         {
+            CoopNetworkAnimal networkAnimal =
+                animal.GetComponent<CoopNetworkAnimal>();
+
+            if (networkAnimal != null)
+            {
+                if (NetworkServer.active)
+                {
+                    networkAnimal.ServerFreeze();
+                }
+                else if (!NetworkClient.active)
+                {
+                    animal.Freeze();
+                }
+
+                return;
+            }
+
             animal.Freeze();
         }
     }
