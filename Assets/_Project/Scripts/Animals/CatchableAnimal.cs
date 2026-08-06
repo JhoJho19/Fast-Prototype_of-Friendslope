@@ -20,6 +20,8 @@ public sealed class CatchableAnimal : MonoBehaviour
     [SerializeField, Min(0.1f)] private float releaseNavMeshSampleDistance = 2f;
 
     private Transform originalParent;
+    private Vector3 originalLocalScale;
+    private Vector3 originalWorldScale;
     private bool isCarried;
     private bool isFrozen;
 
@@ -67,6 +69,8 @@ public sealed class CatchableAnimal : MonoBehaviour
         }
 
         originalParent = transform.parent;
+        originalLocalScale = transform.localScale;
+        originalWorldScale = transform.lossyScale;
     }
 
     public bool BeginCarry(Transform carryPoint)
@@ -94,13 +98,30 @@ public sealed class CatchableAnimal : MonoBehaviour
             stateMachine.Movement.ResetNavMeshBinding();
         }
 
-        transform.SetParent(carryPoint, true);
-        transform.localPosition = Vector3.zero;
-        transform.localRotation = Quaternion.identity;
+        SetCarryParent(carryPoint);
         SetAnimalRenderersEnabled(false);
 
         isCarried = true;
         return true;
+    }
+
+    public void SetCarryParent(Transform carryPoint)
+    {
+        if (carryPoint == null)
+        {
+            return;
+        }
+
+        transform.SetParent(carryPoint, false);
+        transform.localPosition = Vector3.zero;
+        transform.localRotation = Quaternion.identity;
+        SetWorldScale(originalWorldScale);
+    }
+
+    public void RestoreOriginalParent()
+    {
+        transform.SetParent(originalParent, true);
+        transform.localScale = originalLocalScale;
     }
 
     public void Release(Vector3 playerPosition, Vector3 playerForward)
@@ -110,8 +131,7 @@ public sealed class CatchableAnimal : MonoBehaviour
             return;
         }
 
-        Transform restoreParent = originalParent;
-        transform.SetParent(restoreParent, true);
+        RestoreOriginalParent();
 
         Vector3 releasePosition =
             ResolveReleasePosition(playerPosition, playerForward);
@@ -132,9 +152,7 @@ public sealed class CatchableAnimal : MonoBehaviour
         if (stateMachine != null &&
             stateMachine.Movement.TrySnapToNavMesh(
                 releasePosition,
-                releaseNavMeshSampleDistance +
-                (agent != null ? agent.baseOffset : 0f) +
-                1f))
+                releaseNavMeshSampleDistance))
         {
             releasePosition = transform.position;
         }
@@ -284,23 +302,25 @@ public sealed class CatchableAnimal : MonoBehaviour
         Vector3 desiredPosition =
             playerPosition + flattenedForward * releaseDistanceFromPlayer;
 
-        if (TryResolveGroundPosition(
-                desiredPosition,
-                out Vector3 groundedPosition))
-        {
-            desiredPosition = groundedPosition;
-        }
-
         NavMeshQueryFilter filter = new NavMeshQueryFilter
         {
             agentTypeID = agent != null ? agent.agentTypeID : 0,
             areaMask = agent != null ? agent.areaMask : NavMesh.AllAreas
         };
 
+        float sampleDistance = releaseNavMeshSampleDistance;
+
+        if (TryResolveGroundPosition(
+                desiredPosition,
+                out Vector3 groundedPosition))
+        {
+            return groundedPosition;
+        }
+
         if (NavMesh.SamplePosition(
                 desiredPosition,
                 out NavMeshHit desiredHit,
-                releaseNavMeshSampleDistance,
+                sampleDistance,
                 filter))
         {
             return desiredHit.position;
@@ -309,7 +329,7 @@ public sealed class CatchableAnimal : MonoBehaviour
         if (NavMesh.SamplePosition(
                 transform.position,
                 out NavMeshHit fallbackHit,
-                releaseNavMeshSampleDistance,
+                sampleDistance,
                 filter))
         {
             return fallbackHit.position;
@@ -322,15 +342,16 @@ public sealed class CatchableAnimal : MonoBehaviour
         Vector3 desiredPosition,
         out Vector3 groundedPosition)
     {
-        Vector3 rayOrigin = desiredPosition + Vector3.up * 2f;
+        Vector3 rayOrigin = desiredPosition + Vector3.up * 0.5f;
 
         if (Physics.Raycast(
                 rayOrigin,
                 Vector3.down,
                 out RaycastHit hit,
-                6f,
+                releaseNavMeshSampleDistance + 1f,
                 Physics.DefaultRaycastLayers,
-                QueryTriggerInteraction.Ignore))
+                QueryTriggerInteraction.Ignore) &&
+            hit.normal.y > 0.5f)
         {
             groundedPosition = hit.point;
             return true;
@@ -338,6 +359,25 @@ public sealed class CatchableAnimal : MonoBehaviour
 
         groundedPosition = desiredPosition;
         return false;
+    }
+
+    private void SetWorldScale(Vector3 worldScale)
+    {
+        Vector3 parentScale = transform.parent != null
+            ? transform.parent.lossyScale
+            : Vector3.one;
+
+        transform.localScale = new Vector3(
+            GetScaleComponent(worldScale.x, parentScale.x),
+            GetScaleComponent(worldScale.y, parentScale.y),
+            GetScaleComponent(worldScale.z, parentScale.z));
+    }
+
+    private static float GetScaleComponent(float worldScale, float parentScale)
+    {
+        return Mathf.Abs(parentScale) > Mathf.Epsilon
+            ? worldScale / parentScale
+            : worldScale;
     }
 
     private void SetCatchCollidersEnabled(bool enabled)

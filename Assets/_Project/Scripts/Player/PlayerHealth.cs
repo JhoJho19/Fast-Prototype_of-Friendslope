@@ -8,6 +8,8 @@ public class PlayerHealth : MonoBehaviour
 {
     [SerializeField] private float respawnDelay = 0.6f;
     [SerializeField] private GameObject textYouDied;
+    [SerializeField] private GameObject _model;
+    [SerializeField] private GameObject _ragdollPrefab;
 
     private Vector3 startPosition;
     private Quaternion startRotation;
@@ -17,6 +19,7 @@ public class PlayerHealth : MonoBehaviour
     private FirstPersonController firstPersonController;
     private bool isDead;
     private Coroutine respawnCoroutine;
+    private GameObject _spawnedRagdoll;
 
     private void Awake()
     {
@@ -68,6 +71,63 @@ public class PlayerHealth : MonoBehaviour
         }
 
         DisableControls();
+        SpawnRagdoll();
+    }
+
+    public void SpawnRagdoll()
+    {
+        if (_model == null || _ragdollPrefab == null)
+        {
+            return;
+        }
+
+        _model.SetActive(false);
+
+        if (_spawnedRagdoll == null)
+        {
+            Transform modelTransform = _model.transform;
+            _spawnedRagdoll = Instantiate(
+                _ragdollPrefab,
+                modelTransform.position,
+                modelTransform.rotation);
+            CopyBoneTransforms(_model.transform, _spawnedRagdoll.transform);
+        }
+    }
+
+    private static void CopyBoneTransforms(Transform source, Transform target)
+    {
+        target.SetPositionAndRotation(source.position, source.rotation);
+
+        for (int i = 0; i < source.childCount; i++)
+        {
+            Transform sourceChild = source.GetChild(i);
+            Transform targetChild = target.Find(sourceChild.name);
+
+            if (targetChild != null)
+            {
+                CopyBoneTransforms(sourceChild, targetChild);
+            }
+        }
+    }
+
+    public void DestroyRagdoll()
+    {
+        if (_spawnedRagdoll != null)
+        {
+            Destroy(_spawnedRagdoll);
+            _spawnedRagdoll = null;
+        }
+
+        if (_model != null)
+        {
+            _model.SetActive(true);
+
+            Animator animator = _model.GetComponent<Animator>();
+            if (animator != null)
+            {
+                animator.Update(0f);
+            }
+        }
     }
 
     public void ResetForSession()
@@ -78,6 +138,8 @@ public class PlayerHealth : MonoBehaviour
             respawnCoroutine = null;
         }
 
+        DestroyRagdoll();
+
         Transform teleportTarget = characterController != null
             ? characterController.transform
             : transform;
@@ -87,7 +149,17 @@ public class PlayerHealth : MonoBehaviour
             characterController.enabled = false;
         }
 
-        teleportTarget.SetPositionAndRotation(startPosition, startRotation);
+        CoopNetworkPlayer networkPlayer =
+            GetComponent<CoopNetworkPlayer>();
+
+        if (networkPlayer != null)
+        {
+            networkPlayer.ResetToPosition(startPosition, startRotation);
+        }
+        else
+        {
+            teleportTarget.SetPositionAndRotation(startPosition, startRotation);
+        }
 
         if (body != null && !body.isKinematic)
         {
@@ -125,6 +197,11 @@ public class PlayerHealth : MonoBehaviour
         if (textYouDied != null)
         {
             textYouDied.SetActive(false);
+        }
+
+        if (_model != null)
+        {
+            _model.SetActive(true);
         }
     }
 

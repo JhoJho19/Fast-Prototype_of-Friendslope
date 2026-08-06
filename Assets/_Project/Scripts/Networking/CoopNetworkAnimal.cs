@@ -10,14 +10,12 @@ public sealed class CoopNetworkAnimal : NetworkBehaviour
     private uint carrierNetId;
 
     private CatchableAnimal animal;
-    private Transform originalParent;
     private Vector3 startPosition;
     private Quaternion startRotation;
 
     private void Awake()
     {
         animal = GetComponent<CatchableAnimal>();
-        originalParent = transform.parent;
         startPosition = transform.position;
         startRotation = transform.rotation;
     }
@@ -47,9 +45,7 @@ public sealed class CoopNetworkAnimal : NetworkBehaviour
 
         isCarried = true;
         carrierNetId = player.netId;
-        transform.SetParent(carryPoint, false);
-        transform.localPosition = Vector3.zero;
-        transform.localRotation = Quaternion.identity;
+        animal.SetCarryParent(carryPoint);
         ApplyNetworkState();
         return true;
     }
@@ -61,7 +57,6 @@ public sealed class CoopNetworkAnimal : NetworkBehaviour
             return;
         }
 
-        transform.SetParent(originalParent, true);
         animal.Release(playerPosition, playerForward);
         isCarried = false;
         carrierNetId = 0;
@@ -77,12 +72,11 @@ public sealed class CoopNetworkAnimal : NetworkBehaviour
 
         if (isCarried)
         {
-            transform.SetParent(originalParent, true);
             animal.Release(startPosition, startRotation * Vector3.forward);
         }
         else
         {
-            transform.SetParent(originalParent, true);
+            animal.RestoreOriginalParent();
         }
 
         transform.SetPositionAndRotation(startPosition, startRotation);
@@ -128,7 +122,7 @@ public sealed class CoopNetworkAnimal : NetworkBehaviour
 
         if (!isCarried)
         {
-            transform.SetParent(originalParent, true);
+            animal.RestoreOriginalParent();
             animal.ApplyNetworkVisualState(false);
             return;
         }
@@ -141,9 +135,7 @@ public sealed class CoopNetworkAnimal : NetworkBehaviour
 
             if (carryPoint != null)
             {
-                transform.SetParent(carryPoint, false);
-                transform.localPosition = Vector3.zero;
-                transform.localRotation = Quaternion.identity;
+                animal.SetCarryParent(carryPoint);
             }
         }
 

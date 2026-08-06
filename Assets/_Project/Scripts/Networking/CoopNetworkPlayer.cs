@@ -8,11 +8,13 @@ public sealed class CoopNetworkPlayer : NetworkBehaviour
     private Transform movementCapsule;
     private Vector3 capsuleLocalPosition;
     private Quaternion capsuleLocalRotation;
+    private NetworkTransformBase movementNetworkTransform;
     private uint carriedAnimalNetId;
 
     private void Awake()
     {
         movementCapsule = FindChildByName("PlayerCapsule");
+        movementNetworkTransform = GetComponent<NetworkTransformBase>();
 
         if (movementCapsule != null)
         {
@@ -46,6 +48,33 @@ public sealed class CoopNetworkPlayer : NetworkBehaviour
     public void SetLocalOwnershipState(bool isOwner)
     {
         ConfigureOwnerOnlyComponents(isOwner);
+    }
+
+    public void ResetToPosition(Vector3 capsulePosition, Quaternion capsuleRotation)
+    {
+        if (movementCapsule == null)
+        {
+            return;
+        }
+
+        Quaternion targetRotation = Quaternion.Euler(
+            0f,
+            capsuleRotation.eulerAngles.y,
+            0f);
+
+        Vector3 rootPosition =
+            capsulePosition - targetRotation * capsuleLocalPosition;
+
+        transform.SetPositionAndRotation(rootPosition, targetRotation);
+        movementCapsule.localPosition = capsuleLocalPosition;
+        movementCapsule.localRotation = capsuleLocalRotation;
+
+        if (isServer && movementNetworkTransform != null)
+        {
+            movementNetworkTransform.ServerTeleport(
+                rootPosition,
+                targetRotation);
+        }
     }
 
     private void LateUpdate()
@@ -123,6 +152,20 @@ public sealed class CoopNetworkPlayer : NetworkBehaviour
         CmdReleaseAnimal();
     }
 
+    public Vector3 GetReleasePosition()
+    {
+        return movementCapsule != null
+            ? movementCapsule.position
+            : transform.position;
+    }
+
+    public Vector3 GetReleaseForward()
+    {
+        return movementCapsule != null
+            ? movementCapsule.forward
+            : transform.forward;
+    }
+
     [Command]
     private void CmdRequestCatch(uint animalNetId)
     {
@@ -175,7 +218,9 @@ public sealed class CoopNetworkPlayer : NetworkBehaviour
             CoopNetworkAnimal animal =
                 animalIdentity.GetComponent<CoopNetworkAnimal>();
 
-            animal?.ServerRelease(transform.position, transform.forward);
+            animal?.ServerRelease(
+                GetReleasePosition(),
+                GetReleaseForward());
         }
 
         carriedAnimalNetId = 0;

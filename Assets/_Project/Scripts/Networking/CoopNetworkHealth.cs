@@ -48,10 +48,12 @@ public sealed class CoopNetworkHealth : NetworkBehaviour
     {
         if (newValue)
         {
+            GetComponent<PlayerHealth>()?.SpawnRagdoll();
             ApplyDeathToLocalPlayer();
             return;
         }
 
+        GetComponent<PlayerHealth>()?.DestroyRagdoll();
         if (isServer || isLocalPlayer)
         {
             GetComponent<PlayerHealth>()?.ResetForSession();
