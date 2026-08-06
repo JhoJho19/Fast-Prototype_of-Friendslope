@@ -133,7 +133,7 @@ public sealed class CoopNetworkAnimal : NetworkBehaviour
 
         isCarried = false;
         carrierNetId = 0;
-        animal.ApplyNetworkVisualState(false);
+        animal.ApplyNetworkVisualState(false, true);
         ApplyNetworkState();
     }
 
@@ -174,7 +174,7 @@ public sealed class CoopNetworkAnimal : NetworkBehaviour
         if (!isCarried)
         {
             animal.RestoreOriginalParent();
-            animal.ApplyNetworkVisualState(false);
+            animal.ApplyNetworkVisualState(false, true);
             return;
         }
 
@@ -190,7 +190,10 @@ public sealed class CoopNetworkAnimal : NetworkBehaviour
             }
         }
 
-        animal.ApplyNetworkVisualState(true);
+        bool isLocalCarrier =
+            carrier != null && carrier.isLocalPlayer;
+
+        animal.ApplyNetworkVisualState(true, !isLocalCarrier);
     }
 
     private CoopNetworkPlayer ResolveCarrier()

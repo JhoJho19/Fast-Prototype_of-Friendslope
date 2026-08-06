@@ -207,10 +207,12 @@ public sealed class CatchableAnimal : MonoBehaviour
         }
     }
 
-    public void ApplyNetworkVisualState(bool carried)
+    public void ApplyNetworkVisualState(
+        bool carried,
+        bool showNetworkAnimal)
     {
         SetCatchCollidersEnabled(!carried);
-        SetAnimalRenderersEnabled(!carried);
+        SetAnimalRenderersEnabled(!carried || showNetworkAnimal);
     }
 
     public void Freeze()
