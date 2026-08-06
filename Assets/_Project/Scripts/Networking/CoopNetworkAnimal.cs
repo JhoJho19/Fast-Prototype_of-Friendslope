@@ -17,6 +17,8 @@ public sealed class CoopNetworkAnimal : NetworkBehaviour
     private Quaternion startRotation;
     private NetworkTransformBase networkTransform;
 
+    public bool IsFrozen => isFrozen;
+
     private void Awake()
     {
         animal = GetComponent<CatchableAnimal>();
@@ -40,15 +42,16 @@ public sealed class CoopNetworkAnimal : NetworkBehaviour
     }
 
     [Server]
-    public void ServerFreeze()
+    public bool ServerFreeze()
     {
         if (animal == null || isCarried || isFrozen)
         {
-            return;
+            return false;
         }
 
         isFrozen = true;
         animal.Freeze();
+        return true;
     }
 
     public bool ServerTryCarry(CoopNetworkPlayer player)

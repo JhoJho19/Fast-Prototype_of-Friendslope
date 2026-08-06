@@ -28,7 +28,11 @@ public sealed class ShipFloorAnimalStopper : MonoBehaviour
             {
                 if (NetworkServer.active)
                 {
-                    networkAnimal.ServerFreeze();
+                    if (networkAnimal.ServerFreeze())
+                    {
+                        (NetworkManager.singleton as CoopNetworkManager)
+                            ?.NotifyAnimalFrozen(networkAnimal);
+                    }
                 }
                 else if (!NetworkClient.active)
                 {

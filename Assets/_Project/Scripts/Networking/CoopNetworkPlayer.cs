@@ -166,6 +166,15 @@ public sealed class CoopNetworkPlayer : NetworkBehaviour
             : transform.forward;
     }
 
+    [Server]
+    public void ServerShowWinMessage(float duration)
+    {
+        if (connectionToClient != null)
+        {
+            TargetShowWinMessage(connectionToClient, duration);
+        }
+    }
+
     [Command]
     private void CmdRequestCatch(uint animalNetId)
     {
@@ -202,6 +211,15 @@ public sealed class CoopNetworkPlayer : NetworkBehaviour
     {
         GetComponentInChildren<PlayerAnimalCatchInteractor>(true)
             ?.ApplyNetworkRelease();
+    }
+
+    [TargetRpc]
+    private void TargetShowWinMessage(
+        NetworkConnectionToClient target,
+        float duration)
+    {
+        GetComponentInChildren<PlayerAnimalCatchInteractor>(true)
+            ?.ShowWinMessage(duration);
     }
 
     public void ServerReleaseCarriedAnimal()

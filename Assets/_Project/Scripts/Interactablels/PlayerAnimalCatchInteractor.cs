@@ -36,6 +36,7 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
     private CatchableAnimal currentCatchable;
     private CatchableAnimal carriedAnimal;
     private Coroutine missionCoroutine;
+    private Coroutine winMessageCoroutine;
     private bool networkCatchRequested;
 
     private void Awake()
@@ -412,6 +413,45 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
         {
             textMission.SetActive(false);
         }
+    }
+
+    public void ShowWinMessage(float duration)
+    {
+        if (missionCoroutine != null)
+        {
+            StopCoroutine(missionCoroutine);
+            missionCoroutine = null;
+        }
+
+        if (winMessageCoroutine != null)
+        {
+            StopCoroutine(winMessageCoroutine);
+        }
+
+        if (missionLabel != null)
+        {
+            missionLabel.text = "YOU WIN";
+        }
+
+        if (textMission != null)
+        {
+            textMission.SetActive(true);
+        }
+
+        winMessageCoroutine = StartCoroutine(
+            HideWinMessageAfterDelay(duration));
+    }
+
+    private IEnumerator HideWinMessageAfterDelay(float duration)
+    {
+        yield return new WaitForSecondsRealtime(Mathf.Max(0f, duration));
+
+        if (textMission != null)
+        {
+            textMission.SetActive(false);
+        }
+
+        winMessageCoroutine = null;
     }
 
     private Vector3 GetThreatSourcePosition()

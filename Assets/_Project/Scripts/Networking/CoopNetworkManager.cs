@@ -11,7 +11,12 @@ public sealed class CoopNetworkManager : NetworkManager
     [SerializeField, Min(0f)]
     private float sessionRestartDelay = 1.5f;
 
+    [Tooltip("How long the win message is shown before the session resets.")]
+    [SerializeField, Min(0f)]
+    private float winMessageDuration = 1f;
+
     private Coroutine sessionRestartCoroutine;
+    private bool isSessionEnding;
 
     public override void Awake()
     {
@@ -128,7 +133,9 @@ public sealed class CoopNetworkManager : NetworkManager
 
     public void EvaluateSessionState()
     {
-        if (!NetworkServer.active || sessionRestartCoroutine != null)
+        if (!NetworkServer.active ||
+            sessionRestartCoroutine != null ||
+            isSessionEnding)
         {
             return;
         }
@@ -157,9 +164,48 @@ public sealed class CoopNetworkManager : NetworkManager
 
         if (playerCount > 0 && areAllPlayersDead)
         {
+            isSessionEnding = true;
             sessionRestartCoroutine =
                 StartCoroutine(RestartSessionRoutine());
         }
+    }
+
+    public void NotifyAnimalFrozen(CoopNetworkAnimal frozenAnimal)
+    {
+        if (!NetworkServer.active ||
+            frozenAnimal == null ||
+            sessionRestartCoroutine != null ||
+            isSessionEnding)
+        {
+            return;
+        }
+
+        int animalCount = 0;
+
+        foreach (NetworkIdentity identity in NetworkServer.spawned.Values)
+        {
+            if (identity == null ||
+                !identity.TryGetComponent(
+                    out CoopNetworkAnimal networkAnimal))
+            {
+                continue;
+            }
+
+            animalCount++;
+
+            if (!networkAnimal.IsFrozen)
+            {
+                return;
+            }
+        }
+
+        if (animalCount == 0)
+        {
+            return;
+        }
+
+        isSessionEnding = true;
+        sessionRestartCoroutine = StartCoroutine(WinSessionRoutine());
     }
 
     private IEnumerator RestartSessionRoutine()
@@ -172,6 +218,23 @@ public sealed class CoopNetworkManager : NetworkManager
         }
 
         sessionRestartCoroutine = null;
+        isSessionEnding = false;
+    }
+
+    private IEnumerator WinSessionRoutine()
+    {
+        foreach (NetworkConnectionToClient connection in
+                 NetworkServer.connections.Values)
+        {
+            connection?.identity?.GetComponent<CoopNetworkPlayer>()
+                ?.ServerShowWinMessage(winMessageDuration);
+        }
+
+        yield return new WaitForSecondsRealtime(winMessageDuration);
+
+        ResetSessionState();
+        sessionRestartCoroutine = null;
+        isSessionEnding = false;
     }
 
     private bool AreAllPlayersDead()
