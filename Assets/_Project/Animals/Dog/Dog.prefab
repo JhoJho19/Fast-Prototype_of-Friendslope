@@ -11,6 +11,12 @@ GameObject:
   - component: {fileID: 8120504516416956671}
   - component: {fileID: 6098279615885417580}
   - component: {fileID: 4741775219283077829}
+  - component: {fileID: 5607397034257347678}
+  - component: {fileID: 5536132851775329710}
+  - component: {fileID: 9054510680381902994}
+  - component: {fileID: 4703439967280498969}
+  - component: {fileID: 5016984274356011260}
+  - component: {fileID: 2472679576401675371}
   m_Layer: 0
   m_Name: Dog
   m_TagString: Untagged
@@ -53,10 +59,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.28
+  m_Radius: 0.38197213
   m_Height: 1.1
   m_Direction: 2
-  m_Center: {x: 0, y: 0.3, z: 0.05}
+  m_Center: {x: 0, y: 0.40197212, z: 0.050000012}
 --- !u!114 &4741775219283077829
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -70,12 +76,132 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CatchableAnimal
   animalKind: 0
-  stateMachine: {fileID: 0}
-  agent: {fileID: 0}
+  stateMachine: {fileID: 5016984274356011260}
+  agent: {fileID: 5607397034257347678}
   catchColliders:
   - {fileID: 6098279615885417580}
+  animalRenderers:
+  - {fileID: 316477910015636020}
   releaseDistanceFromPlayer: 1.5
   releaseNavMeshSampleDistance: 2
+--- !u!195 &5607397034257347678
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 993238039563517817}
+  m_Enabled: 1
+  m_AgentTypeID: -1372625423
+  m_Radius: 0.2
+  m_Speed: 3.5
+  m_Acceleration: 8
+  avoidancePriority: 40
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 0.93
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
+--- !u!114 &5536132851775329710
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 993238039563517817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4c306843e839254d9b0495673ea41ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimalMovement
+  arrivalDistanceTolerance: 0.05
+  navMeshSnapDistance: 0.5
+  movementSpeedThreshold: 0.01
+--- !u!114 &9054510680381902994
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 993238039563517817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92b76cebc514f4d4fae3e617908df3ea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimalPatrol
+  patrolPoints:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+--- !u!114 &4703439967280498969
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 993238039563517817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbba710ad82e272448ba31c96eaf7ea0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimalAnimation
+  animator: {fileID: 7573106666974242949}
+  speedParameter: Speed
+  movingParameter: Moving
+  locomotionParameter: Vert
+  idleParameter: Idle
+  fleeParameter: Flee
+  movementSpeedThreshold: 0.01
+  idleLocomotionValue: 0
+  movingLocomotionValue: 1
+--- !u!114 &5016984274356011260
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 993238039563517817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a95b847db1ad8d4fa3061af0af44db9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AnimalStateMachine
+  idleDuration: 2
+  fleeChaseRange: 8
+  fleeChaseTimeout: 2.5
+  fleeSpeedMultiplier: 2
+--- !u!54 &2472679576401675371
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 993238039563517817}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!1001 &6392039995736860678
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -84,6 +210,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 8120504516416956671}
     m_Modifications:
+    - target: {fileID: -5644133064174452605, guid: 5f85acdbeff13ed44a226c468baaa9cf, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: 598c258ba46c69d46a3afa196bcbfca4, type: 2}
     - target: {fileID: 8128668236925612103, guid: 5f85acdbeff13ed44a226c468baaa9cf, type: 3}
       propertyPath: m_Name
       value: animated_pitbull_dog
@@ -133,8 +263,18 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: -5645937942226959685, guid: 5f85acdbeff13ed44a226c468baaa9cf, type: 3}
+--- !u!137 &316477910015636020 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 6688211004368706098, guid: 5f85acdbeff13ed44a226c468baaa9cf, type: 3}
+  m_PrefabInstance: {fileID: 6392039995736860678}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &2579935470863270088 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8897093224900880590, guid: 5f85acdbeff13ed44a226c468baaa9cf, type: 3}
+  m_PrefabInstance: {fileID: 6392039995736860678}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &7573106666974242949 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: -5644133064174452605, guid: 5f85acdbeff13ed44a226c468baaa9cf, type: 3}
   m_PrefabInstance: {fileID: 6392039995736860678}
   m_PrefabAsset: {fileID: 0}

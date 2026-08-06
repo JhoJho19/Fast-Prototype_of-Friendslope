@@ -6,6 +6,7 @@ using StarterAssets;
 public class PlayerHealth : MonoBehaviour
 {
     [SerializeField] private float respawnDelay = 0.6f;
+    [SerializeField] private GameObject textYouDied;
 
     private Vector3 startPosition;
     private Quaternion startRotation;
@@ -40,6 +41,11 @@ public class PlayerHealth : MonoBehaviour
         }
 
         isDead = true;
+        if (textYouDied != null)
+        {
+            textYouDied.SetActive(true);
+        }
+
         StartCoroutine(RespawnRoutine());
     }
 
@@ -92,5 +98,9 @@ public class PlayerHealth : MonoBehaviour
         }
 
         isDead = false;
+        if (textYouDied != null)
+        {
+            textYouDied.SetActive(false);
+        }
     }
 }

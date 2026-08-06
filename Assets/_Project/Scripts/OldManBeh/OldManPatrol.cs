@@ -4,6 +4,7 @@ using UnityEngine;
 public class OldManPatrol : MonoBehaviour
 {
     [SerializeField] private Transform[] patrolPoints;
+    [SerializeField] private Transform _startPatrolPoint;
     [SerializeField] private float patrolPointWaitDuration = 2f;
 
     private OldManMovement movement;
@@ -11,8 +12,7 @@ public class OldManPatrol : MonoBehaviour
     private float patrolWaitEndTime;
     private bool isWaitingAtPatrolPoint;
     private bool missingPatrolPointsWarningShown;
-    private bool firstPatrol = true;
-    private static readonly int[] FirstPatrolExcludedIndices = { 2, 3 };
+    private bool _needsStartPatrol = true;
 
     public bool IsWaiting => isWaitingAtPatrolPoint;
 
@@ -24,6 +24,14 @@ public class OldManPatrol : MonoBehaviour
     public void Enter()
     {
         isWaitingAtPatrolPoint = false;
+
+        if (_needsStartPatrol && _startPatrolPoint != null)
+        {
+            _needsStartPatrol = false;
+            movement.MoveTo(_startPatrolPoint.position);
+            return;
+        }
+
         SelectNextPatrolPoint();
     }
 
@@ -77,12 +85,8 @@ public class OldManPatrol : MonoBehaviour
         }
         while (patrolPoints[nextPatrolPointIndex] == null ||
                validPatrolPointCount > 1 &&
-               nextPatrolPointIndex == currentPatrolPointIndex ||
-               firstPatrol &&
-               System.Array.IndexOf(FirstPatrolExcludedIndices, nextPatrolPointIndex) >= 0 &&
-               validPatrolPointCount > 1);
+               nextPatrolPointIndex == currentPatrolPointIndex);
 
-        firstPatrol = false;
         currentPatrolPointIndex = nextPatrolPointIndex;
         movement.MoveTo(patrolPoints[currentPatrolPointIndex].position);
     }

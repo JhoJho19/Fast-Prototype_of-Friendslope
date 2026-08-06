@@ -1,5 +1,7 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using TMPro;
 
 [DisallowMultipleComponent]
 [RequireComponent(typeof(PlayerInteractor))]
@@ -22,6 +24,8 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
     [SerializeField] private GameObject dogVisual;
     [SerializeField] private GameObject catVisual;
     [SerializeField] private GameObject parotVisual;
+    [SerializeField] private GameObject textMission;
+    [SerializeField] private TextMeshProUGUI missionLabel;
 
     private PlayerInteractor interactor;
     private PlayerInteractionHintPresenter hintPresenter;
@@ -30,6 +34,7 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
     private InputAction catchAction;
     private CatchableAnimal currentCatchable;
     private CatchableAnimal carriedAnimal;
+    private Coroutine missionCoroutine;
 
     private void Awake()
     {
@@ -37,6 +42,11 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
         FindCarryPoints();
         FindCarryVisuals();
         HideCarryVisuals();
+    }
+    
+    private void Start()
+    {
+        missionCoroutine = StartCoroutine(ShowInitialMission());
     }
 
     private void Reset()
@@ -261,6 +271,21 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
         carriedAnimal = currentCatchable;
         currentCatchable = null;
         ShowCarryVisual(carriedAnimal.Kind);
+        if (missionCoroutine != null)
+        {
+            StopCoroutine(missionCoroutine);
+            missionCoroutine = null;
+        }
+
+        if (missionLabel != null)
+        {
+            missionLabel.text = "Bring it to the UFO";
+        }
+
+        if (textMission != null)
+        {
+            textMission.SetActive(true);
+        }
     }
 
     private void OnCatchCanceled(InputAction.CallbackContext context)
@@ -307,6 +332,10 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
 
         carriedAnimal.Release(anchor.position, playerForward);
         carriedAnimal = null;
+        if (textMission != null)
+        {
+            textMission.SetActive(false);
+        }
     }
 
     private Vector3 GetThreatSourcePosition()
@@ -377,5 +406,19 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
         {
             visual.SetActive(active);
         }
+    }
+
+    private IEnumerator ShowInitialMission()
+    {
+        if (textMission == null || missionLabel == null)
+        {
+            yield break;
+        }
+
+        missionLabel.text = "Catch an animal and bring them to this UFO";
+        textMission.SetActive(true);
+        yield return new WaitForSeconds(3f);
+        textMission.SetActive(false);
+        missionCoroutine = null;
     }
 }
