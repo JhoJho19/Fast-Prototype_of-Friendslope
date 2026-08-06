@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using kcp2k;
 using Mirror;
 using Mirror.FizzySteam;
+using Steamworks;
 using UnityEngine;
 
 public sealed class CoopNetworkSessionController : MonoBehaviour
@@ -12,9 +14,20 @@ public sealed class CoopNetworkSessionController : MonoBehaviour
     [SerializeField] private SteamNetworkPlatformService steamPlatform;
 
     public event Action<string> StatusChanged;
+    public event Action<string> LobbySearchStatus;
 
     public ulong CurrentSteamLobbyId =>
         steamPlatform != null ? steamPlatform.CurrentLobbyId : 0;
+
+    public SteamLobbyBrowserState BrowserState =>
+        steamPlatform != null ? steamPlatform.BrowserState :
+            SteamLobbyBrowserState.Idle;
+
+    public IReadOnlyList<SteamLobbyInfo> PublicLobbies =>
+        steamPlatform != null ? steamPlatform.PublicLobbies :
+            System.Array.Empty<SteamLobbyInfo>();
+
+    public bool IsSearching => steamPlatform != null && steamPlatform.IsSearching;
 
     private void Awake()
     {
@@ -31,6 +44,8 @@ public sealed class CoopNetworkSessionController : MonoBehaviour
     {
         ResolveReferences();
 
+        CoopNetworkManager.PlayersChanged += HandlePlayersChanged;
+
         if (steamPlatform == null)
         {
             return;
@@ -39,10 +54,13 @@ public sealed class CoopNetworkSessionController : MonoBehaviour
         steamPlatform.StatusChanged += SetStatus;
         steamPlatform.HostLobbyReady += HandleSteamHostLobbyReady;
         steamPlatform.JoinAddressResolved += StartSteamClient;
+        steamPlatform.LobbySearchFailed += OnLobbySearchFailed;
     }
 
     private void OnDisable()
     {
+        CoopNetworkManager.PlayersChanged -= HandlePlayersChanged;
+
         if (steamPlatform == null)
         {
             return;
@@ -51,6 +69,7 @@ public sealed class CoopNetworkSessionController : MonoBehaviour
         steamPlatform.StatusChanged -= SetStatus;
         steamPlatform.HostLobbyReady -= HandleSteamHostLobbyReady;
         steamPlatform.JoinAddressResolved -= StartSteamClient;
+        steamPlatform.LobbySearchFailed -= OnLobbySearchFailed;
     }
 
     public void StartLanHost()
@@ -110,6 +129,27 @@ public sealed class CoopNetworkSessionController : MonoBehaviour
         }
     }
 
+    public void JoinSteamLobby(CSteamID lobbyId)
+    {
+        if (lobbyId == CSteamID.Nil)
+        {
+            SetStatus("Invalid lobby selected.");
+            return;
+        }
+
+        if (!CanStartNetwork())
+        {
+            return;
+        }
+
+        steamPlatform?.JoinLobby(lobbyId);
+    }
+
+    public void RefreshPublicLobbies()
+    {
+        steamPlatform?.RefreshLobbies();
+    }
+
     public void StartSteamClient(string steamHostAddress)
     {
         if (!CanStartNetwork())
@@ -138,6 +178,7 @@ public sealed class CoopNetworkSessionController : MonoBehaviour
             networkManager.StopServer();
         }
 
+        steamPlatform?.SetLobbyGameState("closed");
         steamPlatform?.LeaveLobby();
         UseKcpTransport();
         SetStatus("Network session stopped.");
@@ -153,7 +194,35 @@ public sealed class CoopNetworkSessionController : MonoBehaviour
         UseSteamTransport();
         networkManager.networkAddress = hostAddress;
         networkManager.StartHost();
+        steamPlatform?.SetLobbyGameState("waiting");
         SetStatus($"Steam host started. Lobby ID: {CurrentSteamLobbyId}");
+    }
+
+    private void OnLobbySearchFailed(string message)
+    {
+        LobbySearchStatus?.Invoke(message);
+    }
+
+    private void HandlePlayersChanged()
+    {
+        if (!NetworkServer.active || steamPlatform == null)
+        {
+            return;
+        }
+
+int playerCount = 0;
+
+        foreach (NetworkConnectionToClient connection in
+                 NetworkServer.connections.Values)
+        {
+            if (connection != null && connection.identity != null)
+            {
+                playerCount++;
+            }
+        }
+
+        steamPlatform.SetLobbyGameState(
+            playerCount >= 2 ? "playing" : "waiting");
     }
 
     private void UseKcpTransport()

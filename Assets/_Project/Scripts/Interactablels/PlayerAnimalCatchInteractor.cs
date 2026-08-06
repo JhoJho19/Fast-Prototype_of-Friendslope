@@ -29,11 +29,12 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
     [SerializeField] private GameObject parotVisual;
     [SerializeField] private GameObject textMission;
     [SerializeField] private TextMeshProUGUI missionLabel;
+    [SerializeField, Tooltip("Animator used for local player locomotion and carry states.")]
+    private Animator playerAnimator;
 
     private PlayerInteractor interactor;
     private PlayerInteractionHintPresenter hintPresenter;
     private PlayerInput playerInput;
-    private Animator playerAnimator;
     private Transform releaseAnchor;
     private InputAction catchAction;
     private CatchableAnimal currentCatchable;
@@ -41,6 +42,8 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
     private Coroutine missionCoroutine;
     private Coroutine winMessageCoroutine;
     private bool networkCatchRequested;
+    private bool hasCheckedCarryingParameter;
+    private bool hasCarryingParameter;
 
     private void Awake()
     {
@@ -147,6 +150,8 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
         {
             playerAnimator = GetComponentInChildren<Animator>(true);
         }
+
+        CacheCarryingParameter();
 
         if (releaseAnchor == null)
         {
@@ -515,11 +520,38 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
 
     private void SetCarryingAnimation(bool isCarrying)
     {
-        if (playerAnimator == null ||
+        CacheReferences();
+
+        if (playerAnimator == null)
+        {
+            Debug.LogError(
+                "PlayerAnimalCatchInteractor requires a player Animator.",
+                this);
+            return;
+        }
+
+        if (!hasCarryingParameter)
+        {
+            Debug.LogError(
+                "PlayerAnimator must contain a bool parameter named IsCarrying.",
+                playerAnimator);
+            return;
+        }
+
+        playerAnimator.SetBool(IsCarryingParameter, isCarrying);
+    }
+
+    private void CacheCarryingParameter()
+    {
+        if (hasCheckedCarryingParameter ||
+            playerAnimator == null ||
             playerAnimator.runtimeAnimatorController == null)
         {
             return;
         }
+
+        hasCheckedCarryingParameter = true;
+        hasCarryingParameter = false;
 
         foreach (AnimatorControllerParameter parameter in
                  playerAnimator.parameters)
@@ -527,7 +559,7 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
             if (parameter.nameHash == IsCarryingParameter &&
                 parameter.type == AnimatorControllerParameterType.Bool)
             {
-                playerAnimator.SetBool(IsCarryingParameter, isCarrying);
+                hasCarryingParameter = true;
                 return;
             }
         }

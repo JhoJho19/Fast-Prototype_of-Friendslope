@@ -1639,6 +1639,7 @@ MonoBehaviour:
   parotVisual: {fileID: 1362659076424462433}
   textMission: {fileID: 6624851516211294087}
   missionLabel: {fileID: 6188814748385309078}
+  playerAnimator: {fileID: 8343332368965014632}
 --- !u!4 &4259813550320165900 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8997996947095583982, guid: c5efc39a8aaf6e64ea40e9ad573e9b47, type: 3}
