@@ -166,6 +166,14 @@ public sealed class DoorBeh : MonoBehaviour, IInteractable
 
     public void Interact()
     {
+        CoopNetworkDoor networkDoor = GetComponent<CoopNetworkDoor>();
+
+        if (networkDoor != null)
+        {
+            networkDoor.RequestToggle();
+            return;
+        }
+
         ToggleDoor();
     }
 }

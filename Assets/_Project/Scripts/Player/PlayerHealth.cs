@@ -1,4 +1,5 @@
 using System.Collections;
+using Mirror;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using StarterAssets;
@@ -34,6 +35,20 @@ public class PlayerHealth : MonoBehaviour
     }
 
     public void Die()
+    {
+        CoopNetworkHealth networkHealth =
+            GetComponent<CoopNetworkHealth>();
+
+        if (networkHealth != null && NetworkClient.active)
+        {
+            networkHealth.RequestDeath();
+            return;
+        }
+
+        BeginNetworkDeath();
+    }
+
+    public void BeginNetworkDeath()
     {
         if (isDead)
         {

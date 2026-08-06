@@ -1,4 +1,5 @@
 using System.Collections;
+using Mirror;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using TMPro;
@@ -35,6 +36,7 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
     private CatchableAnimal currentCatchable;
     private CatchableAnimal carriedAnimal;
     private Coroutine missionCoroutine;
+    private bool networkCatchRequested;
 
     private void Awake()
     {
@@ -87,13 +89,24 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
 
         if (currentCatchable != null)
         {
-            currentCatchable.FleeFrom(GetThreatSourcePosition());
+            if (!NetworkClient.active || NetworkServer.active)
+            {
+                currentCatchable.FleeFrom(GetThreatSourcePosition());
+            }
+
             hintPresenter.SubmitHint(this, catchHint, hintPriority);
         }
     }
 
     private void OnDisable()
     {
+        if (networkCatchRequested)
+        {
+            GetComponentInParent<CoopNetworkPlayer>()
+                ?.RequestReleaseAnimal();
+            networkCatchRequested = false;
+        }
+
         if (carriedAnimal != null)
         {
             ReleaseCarriedAnimal();
@@ -255,8 +268,21 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
     private void OnCatchStarted(InputAction.CallbackContext context)
     {
         if (carriedAnimal != null ||
+            networkCatchRequested ||
             currentCatchable == null)
         {
+            return;
+        }
+
+        CoopNetworkPlayer networkPlayer =
+            GetComponentInParent<CoopNetworkPlayer>();
+
+        if (networkPlayer != null &&
+            NetworkClient.active)
+        {
+            networkCatchRequested = true;
+            networkPlayer.RequestCatch(currentCatchable);
+            currentCatchable = null;
             return;
         }
 
@@ -290,6 +316,14 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
 
     private void OnCatchCanceled(InputAction.CallbackContext context)
     {
+        if (networkCatchRequested)
+        {
+            GetComponentInParent<CoopNetworkPlayer>()
+                ?.RequestReleaseAnimal();
+            networkCatchRequested = false;
+            return;
+        }
+
         if (carriedAnimal == null)
         {
             return;
@@ -332,6 +366,48 @@ public sealed class PlayerAnimalCatchInteractor : MonoBehaviour
 
         carriedAnimal.Release(anchor.position, playerForward);
         carriedAnimal = null;
+        if (textMission != null)
+        {
+            textMission.SetActive(false);
+        }
+    }
+
+    public void ApplyNetworkCarry(CatchableAnimal animal)
+    {
+        if (animal == null)
+        {
+            return;
+        }
+
+        carriedAnimal = animal;
+        networkCatchRequested = true;
+        currentCatchable = null;
+        ShowCarryVisual(animal.Kind);
+
+        if (missionCoroutine != null)
+        {
+            StopCoroutine(missionCoroutine);
+            missionCoroutine = null;
+        }
+
+        if (missionLabel != null)
+        {
+            missionLabel.text = "Bring it to the UFO";
+        }
+
+        if (textMission != null)
+        {
+            textMission.SetActive(true);
+        }
+    }
+
+    public void ApplyNetworkRelease()
+    {
+        networkCatchRequested = false;
+        carriedAnimal = null;
+        currentCatchable = null;
+        HideCarryVisuals();
+
         if (textMission != null)
         {
             textMission.SetActive(false);

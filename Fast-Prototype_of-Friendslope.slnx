@@ -41,8 +41,8 @@
   <Project Path="Unity.Burst.Editor.csproj" />
   <Project Path="Unity.TestTools.CodeCoverage.Editor.OpenCover.Mono.Reflection.csproj" />
   <Project Path="Unity.Rider.Editor.csproj" />
-  <Project Path="Unity.VisualScripting.State.csproj" />
   <Project Path="Unity.Mirror.CodeGen.csproj" />
+  <Project Path="Unity.VisualScripting.State.csproj" />
   <Project Path="Unity.AI.Navigation.Updater.csproj" />
   <Project Path="Unity.Performance.Profile-Analyzer.Editor.csproj" />
   <Project Path="glTFast.Newtonsoft.csproj" />
@@ -71,8 +71,8 @@
   <Project Path="Unity.InputSystem.DocCodeSamples.csproj" />
   <Project Path="Unity.ProBuilder.Stl.csproj" />
   <Project Path="Unity.VisualScripting.DocCodeExamples.csproj" />
-  <Project Path="Unity.PlasticSCM.Editor.Entities.csproj" />
   <Project Path="EncryptionTransportEditor.csproj" />
+  <Project Path="Unity.PlasticSCM.Editor.Entities.csproj" />
   <Project Path="Mirror.CompilerSymbols.csproj" />
   <Project Path="Unity.Collections.Editor.csproj" />
 </Solution>

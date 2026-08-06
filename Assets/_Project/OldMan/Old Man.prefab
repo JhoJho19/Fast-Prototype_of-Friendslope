@@ -2445,6 +2445,10 @@ GameObject:
   - component: {fileID: 2481674288369107105}
   - component: {fileID: 8003796952854678339}
   - component: {fileID: 2205237624981404276}
+  - component: {fileID: 8825211719395511657}
+  - component: {fileID: 7848520718738216229}
+  - component: {fileID: 2161086695930575477}
+  - component: {fileID: 7990382308532362653}
   m_Layer: 0
   m_Name: Old Man
   m_TagString: Untagged
@@ -2656,6 +2660,97 @@ MonoBehaviour:
   audioSource: {fileID: 761537430448656636}
   shootClip: {fileID: 8300000, guid: 46e29447b8d25d149855f94412f782bf, type: 3}
   shootVFX: {fileID: 6789153432721434407}
+--- !u!114 &8825211719395511657
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7727499875036149936}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
+  sceneId: 0
+  _assetId: 3310965865
+  serverOnly: 0
+  visibility: 0
+  hasSpawned: 0
+--- !u!114 &7848520718738216229
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7727499875036149936}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 357a46d5a1fe7bc42955ddc64e6551c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CoopServerOnlySimulation
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  serverOnlyComponentNames:
+  - AnimalStateMachine
+  - AnimalMovement
+  - AnimalPatrol
+  - OldManStateMachine
+  - OldManMovement
+  - OldManPatrol
+  - OldManCombat
+--- !u!114 &2161086695930575477
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7727499875036149936}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a553cb17010b2403e8523b558bffbc14, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror.Components::Mirror.NetworkTransformUnreliable
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  target: {fileID: 1683945376130172429}
+  syncPosition: 1
+  syncRotation: 1
+  syncScale: 0
+  onlySyncOnChange: 1
+  compressRotation: 1
+  interpolatePosition: 1
+  interpolateRotation: 1
+  interpolateScale: 1
+  coordinateSpace: 0
+  timelineOffset: 1
+  showGizmos: 0
+  showOverlay: 0
+  overlayColor: {r: 0, g: 0, b: 0, a: 0.5}
+  bufferResetMultiplier: 3
+  useFixedUpdate: 0
+  positionSensitivity: 0.01
+  rotationSensitivity: 0.01
+  scaleSensitivity: 0.01
+--- !u!114 &7990382308532362653
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7727499875036149936}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f6f3bf89aa97405989c802ba270f815, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror.Components::Mirror.NetworkAnimator
+  syncDirection: 1
+  syncMode: 0
+  syncInterval: 0
+  clientAuthority: 0
+  animator: {fileID: 5376580524997341275}
 --- !u!1 &7759347723665245922
 GameObject:
   m_ObjectHideFlags: 0
