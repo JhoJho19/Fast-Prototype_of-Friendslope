@@ -22,6 +22,7 @@ public class OldManStateMachine : MonoBehaviour
     private bool isInitialized;
     private PlayerHealth playerHealth;
     private Collider playerCollider;
+    private PlayerHealth[] playerHealthCandidates;
     private Collider stairsTrigger;
     private Collider hearingTrigger;
     private Collider watchingTrigger;
@@ -39,9 +40,20 @@ public class OldManStateMachine : MonoBehaviour
 
     private void Start()
     {
-        FindPlayer();
+        RefreshPlayerCandidates();
         FindStairsTrigger();
         SetState(OldManState.Patrol);
+    }
+
+    private void OnEnable()
+    {
+        CoopNetworkManager.PlayersChanged += RefreshPlayerCandidates;
+        RefreshPlayerCandidates();
+    }
+
+    private void OnDisable()
+    {
+        CoopNetworkManager.PlayersChanged -= RefreshPlayerCandidates;
     }
 
     private void Update()
@@ -88,21 +100,25 @@ public class OldManStateMachine : MonoBehaviour
         animationController.SetMoving(isMovingAlongPatrolRoute);
     }
 
-    private void FindPlayer()
+    private void RefreshPlayerCandidates()
     {
-        playerHealth = FindFirstObjectByType<PlayerHealth>();
+        playerHealthCandidates =
+            FindObjectsByType<PlayerHealth>(FindObjectsSortMode.None);
+    }
 
-        if (playerHealth == null)
+    private static Collider FindPlayerCollider(PlayerHealth health)
+    {
+        if (health == null)
         {
-            return;
+            return null;
         }
 
         CharacterController character =
-            playerHealth.GetComponentInChildren<CharacterController>();
+            health.GetComponentInChildren<CharacterController>();
 
-        playerCollider = character != null
+        return character != null
             ? character
-            : playerHealth.GetComponentInChildren<Collider>();
+            : health.GetComponentInChildren<Collider>();
     }
 
     private void FindStairsTrigger()
@@ -147,18 +163,52 @@ public class OldManStateMachine : MonoBehaviour
             return;
         }
 
-        if (playerHealth == null || playerCollider == null)
+        playerHealth = null;
+        playerCollider = null;
+
+        if (playerHealthCandidates == null)
         {
-            FindPlayer();
+            RefreshPlayerCandidates();
+        }
+
+        float nearestSqrDistance = float.MaxValue;
+
+        foreach (PlayerHealth candidate in playerHealthCandidates)
+        {
+            if (candidate == null)
+            {
+                continue;
+            }
+
+            CoopNetworkHealth networkHealth =
+                candidate.GetComponent<CoopNetworkHealth>();
+
+            if (networkHealth != null && networkHealth.IsDead)
+            {
+                continue;
+            }
+
+            Collider candidateCollider = FindPlayerCollider(candidate);
+
+            if (candidateCollider == null ||
+                !IsPlayerInsideSensor(hearingTrigger, candidateCollider) &&
+                !IsPlayerInsideSensor(watchingTrigger, candidateCollider))
+            {
+                continue;
+            }
+
+            float sqrDistance =
+                (candidate.transform.position - transform.position).sqrMagnitude;
+
+            if (sqrDistance < nearestSqrDistance)
+            {
+                nearestSqrDistance = sqrDistance;
+                playerHealth = candidate;
+                playerCollider = candidateCollider;
+            }
         }
 
         if (playerHealth == null || playerCollider == null)
-        {
-            return;
-        }
-
-        if (!IsPlayerInsideSensor(hearingTrigger) &&
-            !IsPlayerInsideSensor(watchingTrigger))
         {
             return;
         }
@@ -167,11 +217,15 @@ public class OldManStateMachine : MonoBehaviour
         SetState(OldManState.Aiming);
     }
 
-    private bool IsPlayerInsideSensor(Collider sensor)
+    private bool IsPlayerInsideSensor(
+        Collider sensor,
+        Collider targetCollider)
     {
         return sensor != null &&
                sensor.enabled &&
-               sensor.bounds.Intersects(playerCollider.bounds);
+               targetCollider != null &&
+               targetCollider.enabled &&
+               sensor.bounds.Intersects(targetCollider.bounds);
     }
 
     private bool IsOnStairs()

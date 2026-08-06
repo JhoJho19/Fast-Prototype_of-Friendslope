@@ -3131,6 +3131,50 @@ PhysicsMaterial:
   m_Bounciness: 0
   m_FrictionCombine: 0
   m_BounceCombine: 0
+--- !u!1 &1384166914
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1384166916}
+  - component: {fileID: 1384166915}
+  m_Layer: 0
+  m_Name: PlayerStart_2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1384166915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1384166914}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 41f84591ce72545258ea98cb7518d8b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror::Mirror.NetworkStartPosition
+--- !u!4 &1384166916
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1384166914}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0.46638662, z: 0, w: 0.88458097}
+  m_LocalPosition: {x: 42.832, y: 1.375, z: 59.937}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!134 &1418831881
 PhysicsMaterial:
   m_ObjectHideFlags: 0
@@ -5288,11 +5332,24 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6471483197532988382, guid: a13e13035270a384c94c429b33db9a68, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2620688613756775890}
   m_SourcePrefab: {fileID: 100100000, guid: a13e13035270a384c94c429b33db9a68, type: 3}
+--- !u!1 &2620688613756775886 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6471483197532988382, guid: a13e13035270a384c94c429b33db9a68, type: 3}
+  m_PrefabInstance: {fileID: 2620688613756775885}
+  m_PrefabAsset: {fileID: 0}
 --- !u!195 &2620688613756775887 stripped
 NavMeshAgent:
   m_CorrespondingSourceObject: {fileID: 7204632484023191919, guid: a13e13035270a384c94c429b33db9a68, type: 3}
+  m_PrefabInstance: {fileID: 2620688613756775885}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &2620688613756775888 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 7438396221721173855, guid: a13e13035270a384c94c429b33db9a68, type: 3}
   m_PrefabInstance: {fileID: 2620688613756775885}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &2620688613756775889 stripped
@@ -5300,12 +5357,29 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1598628599181670832, guid: a13e13035270a384c94c429b33db9a68, type: 3}
   m_PrefabInstance: {fileID: 2620688613756775885}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 2620688613756775886}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5a95b847db1ad8d4fa3061af0af44db9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimalStateMachine
+--- !u!114 &2620688613756775890
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2620688613756775886}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f6f3bf89aa97405989c802ba270f815, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror.Components::Mirror.NetworkAnimator
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  clientAuthority: 0
+  animator: {fileID: 2620688613756775888}
 --- !u!1001 &4767059835947264509
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5409,11 +5483,24 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 993238039563517817, guid: 2cb08eed10bbd6142aa815c422ddf8da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4767059835947264514}
   m_SourcePrefab: {fileID: 100100000, guid: 2cb08eed10bbd6142aa815c422ddf8da, type: 3}
+--- !u!1 &4767059835947264510 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 993238039563517817, guid: 2cb08eed10bbd6142aa815c422ddf8da, type: 3}
+  m_PrefabInstance: {fileID: 4767059835947264509}
+  m_PrefabAsset: {fileID: 0}
 --- !u!195 &4767059835947264511 stripped
 NavMeshAgent:
   m_CorrespondingSourceObject: {fileID: 5607397034257347678, guid: 2cb08eed10bbd6142aa815c422ddf8da, type: 3}
+  m_PrefabInstance: {fileID: 4767059835947264509}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &4767059835947264512 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 7573106666974242949, guid: 2cb08eed10bbd6142aa815c422ddf8da, type: 3}
   m_PrefabInstance: {fileID: 4767059835947264509}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &4767059835947264513 stripped
@@ -5421,12 +5508,29 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5016984274356011260, guid: 2cb08eed10bbd6142aa815c422ddf8da, type: 3}
   m_PrefabInstance: {fileID: 4767059835947264509}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 4767059835947264510}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5a95b847db1ad8d4fa3061af0af44db9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimalStateMachine
+--- !u!114 &4767059835947264514
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4767059835947264510}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f6f3bf89aa97405989c802ba270f815, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror.Components::Mirror.NetworkAnimator
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  clientAuthority: 0
+  animator: {fileID: 4767059835947264512}
 --- !u!1001 &4786516985377277302
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5695,11 +5799,24 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3525216744750794722, guid: e2d22c2b819688740a5bc3256c6e3603, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5403226855546192602}
   m_SourcePrefab: {fileID: 100100000, guid: e2d22c2b819688740a5bc3256c6e3603, type: 3}
+--- !u!1 &5403226855546192598 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3525216744750794722, guid: e2d22c2b819688740a5bc3256c6e3603, type: 3}
+  m_PrefabInstance: {fileID: 5403226855546192597}
+  m_PrefabAsset: {fileID: 0}
 --- !u!195 &5403226855546192599 stripped
 NavMeshAgent:
   m_CorrespondingSourceObject: {fileID: 5846249442481055434, guid: e2d22c2b819688740a5bc3256c6e3603, type: 3}
+  m_PrefabInstance: {fileID: 5403226855546192597}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &5403226855546192600 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 8310615369181339772, guid: e2d22c2b819688740a5bc3256c6e3603, type: 3}
   m_PrefabInstance: {fileID: 5403226855546192597}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &5403226855546192601 stripped
@@ -5707,12 +5824,29 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2303433351853361251, guid: e2d22c2b819688740a5bc3256c6e3603, type: 3}
   m_PrefabInstance: {fileID: 5403226855546192597}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 5403226855546192598}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5a95b847db1ad8d4fa3061af0af44db9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AnimalStateMachine
+--- !u!114 &5403226855546192602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5403226855546192598}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f6f3bf89aa97405989c802ba270f815, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror.Components::Mirror.NetworkAnimator
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  clientAuthority: 0
+  animator: {fileID: 5403226855546192600}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -5724,3 +5858,4 @@ SceneRoots:
   - {fileID: 4767059835947264509}
   - {fileID: 1830140790}
   - {fileID: 1894728627}
+  - {fileID: 1384166916}

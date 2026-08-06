@@ -1,14 +1,101 @@
+using System;
 using System.Collections;
 using Mirror;
 using UnityEngine;
 
 public sealed class CoopNetworkManager : NetworkManager
 {
+    public static event Action PlayersChanged;
+
     [Tooltip("Delay before restarting the session after every connected player has died.")]
     [SerializeField, Min(0f)]
     private float sessionRestartDelay = 1.5f;
 
     private Coroutine sessionRestartCoroutine;
+
+    public override void Awake()
+    {
+        base.Awake();
+    }
+
+    public override void OnClientConnect()
+    {
+        if (NetworkServer.active)
+        {
+            return;
+        }
+
+        base.OnClientConnect();
+    }
+
+    public override void OnStartClient()
+    {
+        if (NetworkServer.active)
+        {
+            EnsureClientReadyAndPlayer();
+        }
+    }
+
+    public override void OnClientSceneChanged()
+    {
+        base.OnClientSceneChanged();
+
+        if (NetworkServer.active)
+        {
+            EnsureClientReadyAndPlayer();
+        }
+    }
+
+    private void EnsureClientReadyAndPlayer()
+    {
+        if (!NetworkClient.isConnected || NetworkClient.connection == null)
+        {
+            return;
+        }
+
+        if (NetworkServer.active)
+        {
+            NetworkConnectionToClient localConnection =
+                NetworkServer.localConnection;
+
+            if (localConnection == null)
+            {
+                return;
+            }
+
+            if (!NetworkClient.ready)
+            {
+                NetworkClient.Ready();
+            }
+
+            if (!localConnection.isReady)
+            {
+                NetworkServer.SetClientReady(localConnection);
+            }
+
+            if (localConnection.identity == null)
+            {
+                OnServerAddPlayer(localConnection);
+            }
+
+            return;
+        }
+
+        if (!NetworkClient.connection.isAuthenticated)
+        {
+            return;
+        }
+
+        if (!NetworkClient.ready)
+        {
+            NetworkClient.Ready();
+        }
+
+        if (autoCreatePlayer && NetworkClient.localPlayer == null)
+        {
+            NetworkClient.AddPlayer();
+        }
+    }
 
     public override void OnServerAddPlayer(NetworkConnectionToClient connection)
     {
@@ -18,6 +105,11 @@ public sealed class CoopNetworkManager : NetworkManager
             : Instantiate(playerPrefab, startPosition.position, startPosition.rotation);
 
         NetworkServer.AddPlayerForConnection(connection, player);
+
+        player.GetComponent<CoopNetworkPlayer>()
+            ?.SetLocalOwnershipState(connection == NetworkServer.localConnection);
+
+        PlayersChanged?.Invoke();
     }
 
     public override void OnServerDisconnect(NetworkConnectionToClient connection)
@@ -30,6 +122,7 @@ public sealed class CoopNetworkManager : NetworkManager
         }
 
         base.OnServerDisconnect(connection);
+        PlayersChanged?.Invoke();
         EvaluateSessionState();
     }
 

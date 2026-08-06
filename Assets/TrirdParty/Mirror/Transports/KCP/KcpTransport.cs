@@ -174,7 +174,7 @@ namespace kcp2k
             // call event. might be null if no statistics are listening etc.
             OnClientDataSent?.Invoke(segment, channelId);
         }
-        public override void ClientDisconnect() => client.Disconnect();
+        public override void ClientDisconnect() => client?.Disconnect();
         // process incoming in early update
         public override void ClientEarlyUpdate()
         {

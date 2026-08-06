@@ -20,10 +20,7 @@ public sealed class CoopNetworkPlayer : NetworkBehaviour
             capsuleLocalRotation = movementCapsule.localRotation;
         }
 
-        if (NetworkClient.active && !NetworkServer.active)
-        {
-            ConfigureOwnerOnlyComponents(false);
-        }
+        ConfigureOwnerOnlyComponents(false);
     }
 
     public override void OnStartClient()
@@ -34,6 +31,21 @@ public sealed class CoopNetworkPlayer : NetworkBehaviour
     public override void OnStartLocalPlayer()
     {
         ConfigureOwnerOnlyComponents(true);
+    }
+
+    public override void OnStartAuthority()
+    {
+        ConfigureOwnerOnlyComponents(isLocalPlayer);
+    }
+
+    public override void OnStopAuthority()
+    {
+        ConfigureOwnerOnlyComponents(false);
+    }
+
+    public void SetLocalOwnershipState(bool isOwner)
+    {
+        ConfigureOwnerOnlyComponents(isOwner);
     }
 
     private void LateUpdate()
@@ -209,6 +221,10 @@ public sealed class CoopNetworkPlayer : NetworkBehaviour
 
     private void ConfigureOwnerOnlyComponents(bool isOwner)
     {
+        // Disable the whole camera objects so remote Cinemachine brains and virtual cameras cannot compete.
+        SetOwnerOnlyGameObject("MainCamera", isOwner);
+        SetOwnerOnlyGameObject("PlayerFollowCamera", isOwner);
+
         foreach (MonoBehaviour behaviour in
                  GetComponentsInChildren<MonoBehaviour>(true))
         {
@@ -245,6 +261,16 @@ public sealed class CoopNetworkPlayer : NetworkBehaviour
         foreach (Canvas canvas in GetComponentsInChildren<Canvas>(true))
         {
             canvas.enabled = isOwner;
+        }
+    }
+
+    private void SetOwnerOnlyGameObject(string objectName, bool isOwner)
+    {
+        Transform child = FindChildByName(objectName);
+
+        if (child != null && child.gameObject.activeSelf != isOwner)
+        {
+            child.gameObject.SetActive(isOwner);
         }
     }
 

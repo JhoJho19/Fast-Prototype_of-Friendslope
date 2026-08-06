@@ -129,25 +129,40 @@ namespace Telepathy
             // exceptions are silent
             try
             {
+                // Disconnect() can clear state.client while this thread is
+                // leaving a blocking Connect call. Keep a stable reference
+                // for the remainder of this thread to avoid a race.
+                TcpClient client = state.client;
+
+                if (client == null)
+                {
+                    return;
+                }
+
                 // connect (blocking)
-                state.client.Connect(ip, port);
+                client.Connect(ip, port);
                 state.Connecting = false; // volatile!
 
                 // set socket options after the socket was created in Connect()
                 // (not after the constructor because we clear the socket there)
-                state.client.NoDelay = NoDelay;
-                state.client.SendTimeout = SendTimeout;
-                state.client.ReceiveTimeout = ReceiveTimeout;
+                if (client.Client == null)
+                {
+                    return;
+                }
+
+                client.NoDelay = NoDelay;
+                client.SendTimeout = SendTimeout;
+                client.ReceiveTimeout = ReceiveTimeout;
 
                 // start send thread only after connected
                 // IMPORTANT: DO NOT SHARE STATE ACROSS MULTIPLE THREADS!
-                sendThread = new Thread(() => { ThreadFunctions.SendLoop(0, state.client, state.sendPipe, state.sendPending); });
+                sendThread = new Thread(() => { ThreadFunctions.SendLoop(0, client, state.sendPipe, state.sendPending); });
                 sendThread.IsBackground = true;
                 sendThread.Start();
 
                 // run the receive loop
                 // (receive pipe is shared across all loops)
-                ThreadFunctions.ReceiveLoop(0, state.client, MaxMessageSize, state.receivePipe, ReceiveQueueLimit);
+                ThreadFunctions.ReceiveLoop(0, client, MaxMessageSize, state.receivePipe, ReceiveQueueLimit);
             }
             catch (SocketException exception)
             {
