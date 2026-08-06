@@ -11,11 +11,15 @@ public sealed class CoopNetworkAnimal : NetworkBehaviour
 
     private CatchableAnimal animal;
     private Transform originalParent;
+    private Vector3 startPosition;
+    private Quaternion startRotation;
 
     private void Awake()
     {
         animal = GetComponent<CatchableAnimal>();
         originalParent = transform.parent;
+        startPosition = transform.position;
+        startRotation = transform.rotation;
     }
 
     public override void OnStartClient()
@@ -61,6 +65,47 @@ public sealed class CoopNetworkAnimal : NetworkBehaviour
         animal.Release(playerPosition, playerForward);
         isCarried = false;
         carrierNetId = 0;
+        ApplyNetworkState();
+    }
+
+    public void ServerResetState()
+    {
+        if (!isServer || animal == null)
+        {
+            return;
+        }
+
+        if (isCarried)
+        {
+            transform.SetParent(originalParent, true);
+            animal.Release(startPosition, startRotation * Vector3.forward);
+        }
+        else
+        {
+            transform.SetParent(originalParent, true);
+        }
+
+        transform.SetPositionAndRotation(startPosition, startRotation);
+
+        UnityEngine.AI.NavMeshAgent agent = GetComponent<UnityEngine.AI.NavMeshAgent>();
+
+        if (agent != null && !agent.enabled)
+        {
+            agent.enabled = true;
+        }
+
+        if (agent != null && agent.isActiveAndEnabled)
+        {
+            agent.Warp(startPosition);
+            agent.nextPosition = transform.position;
+        }
+
+        GetComponent<AnimalMovement>()?.ResetNavMeshBinding();
+        GetComponent<AnimalStateMachine>()?.ResetForSession();
+
+        isCarried = false;
+        carrierNetId = 0;
+        animal.ApplyNetworkVisualState(false);
         ApplyNetworkState();
     }
 

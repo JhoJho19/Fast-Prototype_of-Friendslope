@@ -43,6 +43,17 @@ public sealed class CoopNetworkDoor : NetworkBehaviour
         CmdToggle();
     }
 
+    public void ServerResetState()
+    {
+        if (!isServer)
+        {
+            return;
+        }
+
+        isOpen = false;
+        ApplyOpenState();
+    }
+
     [Command(requiresAuthority = false)]
     private void CmdToggle(NetworkConnectionToClient sender = null)
     {

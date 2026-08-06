@@ -80,6 +80,22 @@ public sealed class AnimalStateMachine : MonoBehaviour
         currentStateHandler.Enter();
     }
 
+    public void ResetForSession()
+    {
+        if (isInitialized)
+        {
+            currentStateHandler.Exit();
+        }
+
+        isInitialized = false;
+        currentStateHandler = null;
+        hasFleeSource = false;
+        fleeSource = Vector3.zero;
+        lastFleeSourceTime = 0f;
+
+        SetState(AnimalState.Patrol);
+    }
+
     public void SetFleeSource(Vector3 source)
     {
         fleeSource = source;

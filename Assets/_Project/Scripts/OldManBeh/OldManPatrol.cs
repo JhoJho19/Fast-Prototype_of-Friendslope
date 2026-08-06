@@ -59,6 +59,14 @@ public class OldManPatrol : MonoBehaviour
         isWaitingAtPatrolPoint = false;
     }
 
+    public void ResetForSession()
+    {
+        currentPatrolPointIndex = -1;
+        patrolWaitEndTime = 0f;
+        isWaitingAtPatrolPoint = false;
+        _needsStartPatrol = true;
+    }
+
     private void StartPatrolPointWait()
     {
         isWaitingAtPatrolPoint = true;

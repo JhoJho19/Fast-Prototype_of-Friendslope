@@ -16,6 +16,7 @@ public class PlayerHealth : MonoBehaviour
     private CharacterController characterController;
     private FirstPersonController firstPersonController;
     private bool isDead;
+    private Coroutine respawnCoroutine;
 
     private void Awake()
     {
@@ -46,6 +47,11 @@ public class PlayerHealth : MonoBehaviour
         }
 
         BeginNetworkDeath();
+
+        if (respawnCoroutine == null)
+        {
+            respawnCoroutine = StartCoroutine(RespawnRoutine());
+        }
     }
 
     public void BeginNetworkDeath()
@@ -61,7 +67,65 @@ public class PlayerHealth : MonoBehaviour
             textYouDied.SetActive(true);
         }
 
-        StartCoroutine(RespawnRoutine());
+        DisableControls();
+    }
+
+    public void ResetForSession()
+    {
+        if (respawnCoroutine != null)
+        {
+            StopCoroutine(respawnCoroutine);
+            respawnCoroutine = null;
+        }
+
+        Transform teleportTarget = characterController != null
+            ? characterController.transform
+            : transform;
+
+        if (characterController != null)
+        {
+            characterController.enabled = false;
+        }
+
+        teleportTarget.SetPositionAndRotation(startPosition, startRotation);
+
+        if (body != null && !body.isKinematic)
+        {
+            body.linearVelocity = Vector3.zero;
+            body.angularVelocity = Vector3.zero;
+        }
+
+        if (characterController != null)
+        {
+            characterController.enabled = true;
+        }
+
+        bool isLocalOwner = !NetworkClient.active ||
+            GetComponent<CoopNetworkPlayer>()?.isLocalPlayer == true;
+
+        if (firstPersonController != null)
+        {
+            firstPersonController.enabled = isLocalOwner;
+        }
+
+        if (playerInput != null)
+        {
+            if (isLocalOwner)
+            {
+                playerInput.ActivateInput();
+            }
+            else
+            {
+                playerInput.DeactivateInput();
+            }
+        }
+
+        isDead = false;
+
+        if (textYouDied != null)
+        {
+            textYouDied.SetActive(false);
+        }
     }
 
     private IEnumerator RespawnRoutine()
@@ -85,37 +149,24 @@ public class PlayerHealth : MonoBehaviour
         yield return new WaitForSeconds(respawnDelay);
 
         Debug.Log("[PlayerHealth] after wait, teleporting to " + startPosition);
+        ResetForSession();
+    }
 
-        Transform teleportTarget = characterController != null
-            ? characterController.transform
-            : transform;
-        teleportTarget.SetPositionAndRotation(startPosition, startRotation);
-
-        if (body != null && !body.isKinematic)
+    private void DisableControls()
+    {
+        if (playerInput != null)
         {
-            body.linearVelocity = Vector3.zero;
-            body.angularVelocity = Vector3.zero;
-        }
-
-        if (characterController != null)
-        {
-            characterController.enabled = true;
+            playerInput.DeactivateInput();
         }
 
         if (firstPersonController != null)
         {
-            firstPersonController.enabled = true;
+            firstPersonController.enabled = false;
         }
 
-        if (playerInput != null)
+        if (characterController != null)
         {
-            playerInput.ActivateInput();
-        }
-
-        isDead = false;
-        if (textYouDied != null)
-        {
-            textYouDied.SetActive(false);
+            characterController.enabled = false;
         }
     }
 }
